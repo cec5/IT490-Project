@@ -1,1 +1,2 @@
-# IT490Project_GodHelpUs
+# IT490-Project
+Senior year webapp project
