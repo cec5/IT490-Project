@@ -1,7 +1,7 @@
 <?php
-require_once('../rabbitmqphp_example/path.inc');
-require_once('../rabbitmqphp_example/get_host_info.inc');
-require_once('../rabbitmqphp_example/rabbitMQLib.inc');
+require_once('../rabbitmq_files/path.inc');
+require_once('../rabbitmq_files/get_host_info.inc');
+require_once('../rabbitmq_files/rabbitMQLib.inc');
 
 function doLogin($username,$password){
     // lookup username in databas
@@ -27,7 +27,7 @@ function requestProcessor($request){
   return array("returnCode" => '0', 'message'=>"Database Server received request and processed");
 }
 
-$server = new rabbitMQServer("../rabbitmqphp_example/rabbitMQ_db.ini","testServer");
+$server = new rabbitMQServer("../rabbitmq_files/rabbitMQ_db.ini","testServer");
 
 echo "Database Listener Active".PHP_EOL;
 $server->process_requests('requestProcessor');
