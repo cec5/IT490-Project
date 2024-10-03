@@ -23,7 +23,4 @@ function createRabbitMQClientDatabase($request){
 
 	return $response;
 }
-
-//uncomment below and run the file to see if it communicates correctly on the rabbitMQ server
-//createRabbitMQClientDB("test");
 ?>
