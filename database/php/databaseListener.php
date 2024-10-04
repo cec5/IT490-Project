@@ -18,7 +18,7 @@ function requestProcessor($request){
   }
   switch ($request['type']){
  	 case "test":
-		 return "test message recieved".PHP_EOL;
+		 return "test message recieved from the database server".PHP_EOL;
 	 case "login":
 		 return doLogin($request['username'],$request['password']);
 	 case "validate_session":
