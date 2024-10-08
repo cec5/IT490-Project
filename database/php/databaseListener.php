@@ -4,8 +4,12 @@ require_once('../rabbitmq_files/get_host_info.inc');
 require_once('../rabbitmq_files/rabbitMQLib.inc');
 
 
-function doLogin($username,$password){
+$server = "%"; //any host
+$username = "admin";
+$password = "pass";
+$db = "project";
 
+function doLogin($username,$password){
 // lookup username in databas	
 	try {
 		$pdo = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);

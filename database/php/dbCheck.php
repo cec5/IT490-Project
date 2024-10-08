@@ -1,17 +1,26 @@
-s<?php
+<?php
 
-$host = 'aws-0-us-east-1.pooler.supabase.com';
-$db = 'postgress';
-$user = 'postgres.scpoojzcwikmbjwjabua';
-$pass = '5TI6sqXVtZIKD411';
-$port = '6543';
+$server = "localhost"; //any host
+$username = "admin";
+$password = "pass";
+$db = "project";
 
-try {
-	$pdo = new PDO("pgsql:host=$host;port=$port;dbname=$db", $user, $pass);
-	$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$conn = new mysqli($server, $username, $password, $db);
 
-	echo "db success";
-} catch (PDOException $e) {
-	echo "db fail" . $e->getMessage();
+if (checkConnection($conn)) {
+	echo "db connected";
+} else {
+	echo "db fail";
+}	
+
+
+function checkConnection($conn) {
+	if ($conn->connect_error) { //check if connection fails
+		return false;
+	}
+	return true;
 }
+
+
+$conn->close();
 ?>
