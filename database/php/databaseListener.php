@@ -10,14 +10,18 @@ $password = "5TI6sqXVtZIKD411";
 
 
 function doLogin($username,$password){
-	// lookup username in databas	
+
+// lookup username in databas	
+//WILL BE SET TO .ENV WITH UPDATED PASSWORD	
 $host = "aws-0-us-east-1.pooler.supabase.com";
 $dbname = "postgres";
 $user = "postgres.scpoojzcwikmbjwjabua";
 $password = "5TI6sqXVtZIKD411";
+$port = '6543';
+
 
 	try {
-		$pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $password);
+		$pdo = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
 		$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 		$stmt = $pdo->prepare("SELECT COUNT(*) FROM userLogin WHERE username = :username");

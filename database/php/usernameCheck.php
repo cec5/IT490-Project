@@ -9,8 +9,12 @@ if (doLogin('test', 'user')) {
 	echo "Username does not";
 }
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+if (doLogin('testt', 'user')) {
+        echo "Username exists" . PHP_EOL;
+} else {
+        echo "Username does not";
+}
+
 
 ?>
 
