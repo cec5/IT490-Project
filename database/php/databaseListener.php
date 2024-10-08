@@ -3,6 +3,12 @@ require_once('../rabbitmq_files/path.inc');
 require_once('../rabbitmq_files/get_host_info.inc');
 require_once('../rabbitmq_files/rabbitMQLib.inc');
 
+$host = "aws-0-us-east-1.pooler.supabase.com"
+$dbname = "postgres"
+$user = "postgres.scpoojzcwikmbjwjabua"
+$password = "5TI6sqXVtZIKD411"
+
+
 function doLogin($username,$password){
     // lookup username in databas
     // check password
