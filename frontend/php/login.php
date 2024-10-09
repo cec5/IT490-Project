@@ -39,7 +39,7 @@
         <?php
         if (isset($_POST['username']) && isset($_POST['password'])) {
             // Load RabbitMQ client function
-            require 'client_rmq_db.php';
+		require 'client_rmq_db.php';
 
             $username = $_POST['username'];
 	    $password = $_POST['password'];
@@ -51,9 +51,6 @@
 
             // Use the RabbitMQ client to validate login
 	    $isAuthenticated = createRabbitMQClientDatabase($request);
-
-	    // For testing purposes ONLY, comment out otherwise!!!
-	    echo "<div class='alert alert-success'>$isAuthenticated</div>";
 
             if ($isAuthenticated) {
                 echo "<div class='alert alert-success'>Login successful!</div>";
