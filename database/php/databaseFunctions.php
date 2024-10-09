@@ -2,7 +2,7 @@
 
 // Initialize the MySQLi connection
 function dbConnect(){
-	$db = new mysqli('dbHost', 'dbUser', 'dbPass', 'dbName');
+	$db = new mysqli('localhost', 'admin', 'pass', 'project');
 	if ($db->connect_error) {
 		die("Connection failed: " . $db->connect_error);
 	}
