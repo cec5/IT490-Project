@@ -2,13 +2,7 @@
 require_once('../rabbitmq_files/path.inc');
 require_once('../rabbitmq_files/get_host_info.inc');
 require_once('../rabbitmq_files/rabbitMQLib.inc');
-
-function doLogin($username,$password){
-    // lookup username in databas
-    // check password
-    return true;
-    //return false if not valid
-}
+require_once('databaseFunctions.php');
 
 function requestProcessor($request){
   echo "received request".PHP_EOL;
@@ -20,10 +14,12 @@ function requestProcessor($request){
  	 case "test":
 		 return "test message recieved from the database server".PHP_EOL;
 	 case "login":
-		 //return doLogin($request['username'],$request['password']);
+		 //$result = doLogin($request['username'], $request['password']);
+		 //return $result;
 		 return false;
 	 case "register":
-		 return false;
+	  	$result = doRegister($request['username'], $request['email'], $request['password']);
+	  	return $result; // Return the array with success and message
 	 case "validate_session":
 		 return doValidate($request['sessionId']);
   }
