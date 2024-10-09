@@ -45,8 +45,14 @@
             $email = $_POST['email'];
             $password = $_POST['password'];
 
+	    $request = array();
+	    $request['type'] = "register";
+	    $request['username'] = $username;
+	    $request['email'] = $email;
+	    $request['password'] = $password;
+
             // Use the RabbitMQ client to handle registration
-            //$isRegistered = //To be done
+            $isRegistered = createRabbitMQClientDatabase($request);
 
             if ($isRegistered) {
                 echo "<div class='alert alert-success'>Registration successful! <a href='login.php'>Login here</a></div>";
@@ -77,4 +83,3 @@
     <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
