@@ -20,7 +20,10 @@ function requestProcessor($request){
  	 case "test":
 		 return "test message recieved from the database server".PHP_EOL;
 	 case "login":
-		 return doLogin($request['username'],$request['password']);
+		 //return doLogin($request['username'],$request['password']);
+		 return false;
+	 case "register":
+		 return false;
 	 case "validate_session":
 		 return doValidate($request['sessionId']);
   }
