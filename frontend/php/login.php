@@ -50,14 +50,18 @@
 	    $request['password'] = $password;
 
             // Use the RabbitMQ client to validate login
-	    $isAuthenticated = createRabbitMQClientDatabase($request);
+	    $response = createRabbitMQClientDatabase($request);
 
-            if ($isAuthenticated) {
-                echo "<div class='alert alert-success'>Login successful!</div>";
-                // Redirect or set session token as needed
+            if ($response['success']) {
+            // Store the JWT token on the client-side
+            echo "<script>
+                localStorage.setItem('token', '{$response['token']}');
+                alert('Login successful!');
+                window.location.href = 'index.php';
+              </script>";
             } else {
-                echo "<div class='alert alert-danger'>Invalid username or password.</div>";
-            }
+            	echo "<div class='alert alert-danger'>{$response['message']}</div>";
+            	}
         }
         ?>
         <form action="" method="POST">

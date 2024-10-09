@@ -28,6 +28,10 @@
                     <li class="nav-item">
                         <a class="nav-link" href="register.php">Register</a>
                     </li>
+                    <!-- Logout Button, initially hidden -->
+                    <li class="nav-item" id="logoutButton" style="display: none;">
+                        <a class="nav-link" href="#" onclick="logout()">Logout</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -41,5 +45,26 @@
 
     <!-- Bootstrap JS -->
     <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Function to check if the JWT token exists and toggle the Logout button
+        document.addEventListener("DOMContentLoaded", function() {
+            // Check for JWT token in localStorage
+            if (localStorage.getItem('token')) {
+                // Show the Logout button and hide the Login/Register buttons
+                document.getElementById("logoutButton").style.display = "block";
+                document.querySelector('a[href="login.php"]').style.display = "none";
+                document.querySelector('a[href="register.php"]').style.display = "none";
+            }
+        });
+
+        // Logout function to remove JWT token and redirect to the login page
+        function logout() {
+            // Remove the JWT token from localStorage
+            localStorage.removeItem('token');
+            // Redirect to the login page
+            window.location.href = 'login.php';
+        }
+    </script>
 </body>
 </html>
+
