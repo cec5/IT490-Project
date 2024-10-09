@@ -52,12 +52,12 @@
 	    $request['password'] = $password;
 
             // Use the RabbitMQ client to handle registration
-            $isRegistered = createRabbitMQClientDatabase($request);
+            $response = createRabbitMQClientDatabase($request);
 
-            if ($isRegistered) {
+            if ($response['success']) {
                 echo "<div class='alert alert-success'>Registration successful! <a href='login.php'>Login here</a></div>";
             } else {
-                echo "<div class='alert alert-danger'>Registration failed. Please try again.</div>";
+                echo "<div class='alert alert-danger'>{$response['message']}</div>";
             }
         }
         ?>
