@@ -4,15 +4,15 @@
 require_once '../php/databaseListener.php';
 
 if (doLogin('user', 'test')) {
-	echo "Username exists" . PHP_EOL;
+	echo "Login" . PHP_EOL;
 } else {
-	echo "Username does not";
+	echo "No match";
 }
 
-if (doLogin('testt', 'usefsafsr')) {
-        echo "Username exists" . PHP_EOL;
+if (doLogin('user', 'usefsafsr')) {
+        echo "Login" . PHP_EOL;
 } else {
-        echo "Username does not";
+        echo "No match";
 }
 
 ?>
