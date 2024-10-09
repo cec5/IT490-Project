@@ -12,10 +12,25 @@ function dbConnect(){
 function doRegister($username, $email, $password) {
     $db = dbConnect();
 
-    // Hash the password
-    $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+    // Check if username already exists
+    $stmt = $db->prepare("SELECT * FROM users WHERE username = ?");
+    if (!$stmt) {
+        return "Prepare failed: " . $db->error;
+    }
 
-    // Prepare and bind the statement
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        // Username is taken
+        $stmt->close();
+        $db->close();
+        return array("success" => false, "message" => "Username is already taken.");
+    }
+
+    // Username is available, proceed with registration
+    $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
     $stmt = $db->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
     if (!$stmt) {
         return "Prepare failed: " . $db->error;
@@ -24,18 +39,14 @@ function doRegister($username, $email, $password) {
     $stmt->bind_param("sss", $username, $email, $hashedPassword);
     $stmt->execute();
 
-    if ($stmt->affected_rows > 0) {
-        $message = "User registered successfully!";
-    } else {
-        $message = false;
-    }
-
+    $isRegistered = $stmt->affected_rows > 0;
     $stmt->close();
     $db->close();
-    return $message;
+
+    return array("success" => $isRegistered, "message" => $isRegistered ? "Registration successful!" : "Registration failed.");
 }
 
-function login($username, $password) {
+function doLogin($username, $password) {
     $db = dbConnect();
 
     // Prepare and execute the statement
