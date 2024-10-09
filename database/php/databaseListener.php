@@ -14,9 +14,7 @@ function requestProcessor($request){
  	 case "test":
 		 return "test message recieved from the database server".PHP_EOL;
 	 case "login":
-		 //$result = doLogin($request['username'], $request['password']);
-		 //return $result;
-		 return false;
+		 return doLogin($request['username'], $request['password']);
 	 case "register":
 	  	$result = doRegister($request['username'], $request['email'], $request['password']);
 	  	return $result; // Return the array with success and message
