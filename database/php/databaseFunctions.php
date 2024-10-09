@@ -1,4 +1,6 @@
 <?php
+require 'vendor/autoload.php';
+use \Firebase\JWT\JWT;
 
 // Initialize the MySQLi connection
 function dbConnect(){
@@ -52,7 +54,7 @@ function doLogin($username, $password) {
     // Prepare and execute the statement
     $stmt = $db->prepare("SELECT * FROM users WHERE username = ?");
     if (!$stmt) {
-        return "Prepare failed: " . $db->error;
+        return array("success" => false, "message" => "Database error: Unable to prepare statement.");
     }
 
     $stmt->bind_param("s", $username);
@@ -64,9 +66,9 @@ function doLogin($username, $password) {
     if ($user && password_verify($password, $user['password'])) {
         // Generate JWT token
         $token = generateJWT($user['id']);
-        $message = $token; // Send this token to the frontend
+        $message = array("success" => true, "token" => $token);
     } else {
-        $message = false;
+        $message = array("success" => false, "message" => "Invalid username or password.");
     }
 
     $stmt->close();
@@ -94,6 +96,6 @@ function generateJWT($userId) {
         'exp' => time() + (60 * 60) // 1-hour expiration
     ];
 
-    return JWT::encode($payload, $key);
+    return JWT::encode($payload, $key,'HS256');
 }
 ?>

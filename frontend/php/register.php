@@ -1,38 +1,5 @@
-<?php
-
-?>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
-    <!-- Bootstrap CSS -->
-    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
-</head>
+<?php include 'header.php';?>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">IT490-Project</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="login.php">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="register.php">Register</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
     <!-- Registration Form -->
     <div class="container mt-5">
         <h2 class="mb-4">Register</h2>
@@ -78,7 +45,6 @@
         </form>
         <p class="mt-3">Already have an account? <a href="login.php">Login here</a>.</p>
     </div>
-
     <!-- Bootstrap JS -->
     <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
