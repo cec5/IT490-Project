@@ -20,12 +20,10 @@ function requestProcessor($request){
  	 case "test":
 		 return "test message recieved from the database server".PHP_EOL;
 	 case "login":
-		 // return doLogin($request['username'],$request['password']);
-
-		 // next three lines are for testing purposes ONLY, comment out or delete once setup
-		 $tusername = $request['username'];
-		 echo "server-side verification test message, username: $tusername".PHP_EOL;
-		 return "this is a verification test message, username: $tusername".PHP_EOL;
+		 //return doLogin($request['username'],$request['password']);
+		 return false;
+	 case "register":
+		 return false;
 	 case "validate_session":
 		 return doValidate($request['sessionId']);
   }
