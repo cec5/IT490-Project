@@ -4,27 +4,31 @@ require_once('../rabbitmq_files/get_host_info.inc');
 require_once('../rabbitmq_files/rabbitMQLib.inc');
 
 
-$server = "%"; //any host
+$server = "localhost"; //any host
 $username = "admin";
 $password = "pass";
 $db = "project";
 
-function doLogin($username,$password){
+$conn = new mysqli($server, $username, $password, $db);
+
+
+function doLogin($username){
 // lookup username in databas	
-	try {
-		$pdo = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $password);
-		$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+	$conn = new mysqli("localhost", "admin", "pass", "project");
+	
+	$stmt = $conn->prepare("SELECT COUNT(*) FROM userLogin WHERE username = ?");
 
-		$stmt = $pdo->prepare("SELECT COUNT(*) FROM userLogin WHERE username = :username");
-		$stmt->execute(['username' => $username]);
+	$stmt->bind_param("s", $username);
 
-		$count = $stmt->fetchColumn();
+	$stmt->execute();
 
-		return $count > 0;
-	} catch (PDOException $e) {
-		echo "Error: " . $e->getMessage();
-		return false;
-	}
+	$stmt->bind_result($count);
+	$stmt->fetch();
+
+	$stmt->close();
+	$conn->close();
+
+	return $count > 0;
     // check password
     //return false if not valid
 }
