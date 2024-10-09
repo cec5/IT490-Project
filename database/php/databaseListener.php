@@ -23,7 +23,8 @@ function requestProcessor($request){
 		 //return doLogin($request['username'],$request['password']);
 		 return false;
 	 case "register":
-		 return false;
+	  	$result = doRegister($request['username'], $request['email'], $request['password']);
+	  	return $result; // Return the array with success and message
 	 case "validate_session":
 		 return doValidate($request['sessionId']);
   }
