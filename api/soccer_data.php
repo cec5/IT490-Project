@@ -16,8 +16,8 @@ class SoccerData {
 
     public function getMatches() {
         $filters = [
-            'dateFrom' => '2024-10-22',
-            'dateTo' => '2024-10-31',
+            'dateFrom' => '2024-10-01',
+            'dateTo' => '2024-10-10',
             'permission' => 'TIER_ONE',
             'competitions' => 'PL'
         ];
@@ -37,11 +37,26 @@ class SoccerData {
 
         error_log(print_r(json_decode($response, true), true));
 
-        return json_decode($response, true);
+
+        $matches = json_decode($response, true);
+        if (isset($matches['matches'])) {
+            foreach ($matches['matches'] as $match) {
+                $date = $match['utcDate'];
+                $homeTeam = $match['homeTeam']['name'];
+                $awayTeam = $match['awayTeam']['name'];
+                $scoreHome = $match['score']['fullTime']['home'];
+                $scoreAway = $match['score']['fullTime']['away'];
+
+                echo "Date: $date | ";
+                echo "Match: $homeTeam vs $awayTeam | ";
+		echo "Score: $scoreHome - $scoreAway<hr><br>";
+            }
+        } else {
+            echo "No matches found for the specified date range.";
+        }
     }
 }
 
 $soccerData = new SoccerData();
-$matches = $soccerData->getMatches();
-print_r($matches);
+$soccerData->getMatches();
 ?>
