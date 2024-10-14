@@ -1,5 +1,5 @@
 <?php
-require '../vendor/autoload.php';
+require '../../vendor/autoload.php';
 
 use Dotenv\Dotenv;
 
@@ -8,7 +8,7 @@ class SoccerData {
     private $apiToken;
 
     public function __construct() {
-    	$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+    	$dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
 	$dotenv->load();
 	$this->apiToken = $_ENV['API_TOKEN'];
     }
