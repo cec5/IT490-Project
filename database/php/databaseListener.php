@@ -2,7 +2,38 @@
 require_once('../rabbitmq_files/path.inc');
 require_once('../rabbitmq_files/get_host_info.inc');
 require_once('../rabbitmq_files/rabbitMQLib.inc');
+<<<<<<< HEAD
 require_once('databaseFunctions.php');
+=======
+
+
+$server = "localhost";
+$username = "admin";
+$password = "pass";
+$db = "project";
+
+$conn = new mysqli($server, $username, $password, $db);
+
+
+function doLogin($dbUser, $dbPass){
+	$conn = new mysqli("localhost", "admin", "pass", "project"); //establish connection to database
+	
+	$stmt = $conn->prepare("SELECT COUNT(*) FROM userLogin WHERE username = ? AND password = ?"); //search the database to find result where username and password match
+
+	$stmt->bind_param("ss", $dbUser, $dbPass); //correctly assign the username and password that are searched for
+
+	$stmt->execute(); //search
+
+	$stmt->bind_result($count); //counts row of correct username/pass
+	$stmt->fetch(); 
+
+	$stmt->close();
+	$conn->close();
+
+	return $count > 0; //if entry of correct user/pass exist, return true, else false
+
+}
+>>>>>>> 92e01a79adde95e6bd10c596e7f09c5bf0263011
 
 function requestProcessor($request){
   echo "received request".PHP_EOL;
