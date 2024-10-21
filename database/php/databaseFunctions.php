@@ -33,12 +33,16 @@ function doRegister($username, $email, $password) {
 
     // Username is available, proceed with registration
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-    $stmt = $db->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
+
+    //current epoch time
+    $epochTime = time();
+
+    $stmt = $db->prepare("INSERT INTO users (username, email, password, epoch) VALUES (?, ?, ?, ?)");
     if (!$stmt) {
         return "Prepare failed: " . $db->error;
     }
 
-    $stmt->bind_param("sss", $username, $email, $hashedPassword);
+    $stmt->bind_param("sssi", $username, $email, $hashedPassword, $epochTime);
     $stmt->execute();
 
     $isRegistered = $stmt->affected_rows > 0;
