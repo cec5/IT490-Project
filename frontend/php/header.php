@@ -23,7 +23,13 @@
                     <li class="nav-item">
                         <a class="nav-link" href="register.php">Register</a>
                     </li>
-                    <!-- Logout Button, initially hidden -->
+                    <!-- Buttons hidden when not logged in -->
+                    <li class="nav-item" id="leaguesList" style="display: none;">
+                        <a class="nav-link" href="leagueslist.php"">Join a League</a>
+                    </li>
+                    <li class="nav-item" id="myLeagues" style="display: none;">
+                        <a class="nav-link" href="myleagues.php"">My Leagues</a>
+                    </li>
                     <li class="nav-item" id="logoutButton" style="display: none;">
                         <a class="nav-link" href="#" onclick="logout()">Logout</a>
                     </li>
@@ -34,20 +40,32 @@
 
     <!-- Logout script and conditional display for Logout button -->
     <script>
+        // Helper function to get a cookie value by name
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
-            // Check for JWT token in localStorage
-            if (localStorage.getItem('token')) {
+            // Check for JWT token in cookies
+            const jwtToken = getCookie('jwt_token');
+            if (jwtToken) {
                 // Show the Logout button and hide Login/Register links
                 document.getElementById("logoutButton").style.display = "block";
+                document.getElementById("myLeagues").style.display = "block";
+                document.getElementById("leaguesList").style.display = "block";
                 document.querySelector('a[href="login.php"]').style.display = "none";
                 document.querySelector('a[href="register.php"]').style.display = "none";
             }
         });
 
         function logout() {
-            // Remove the JWT token from localStorage
-            localStorage.removeItem('token');
-            // Redirect to the login page
+            // Remove the JWT token cookie by setting its expiration to a past date
+            document.cookie = "jwt_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             window.location.href = 'login.php';
         }
     </script>
+</body>
+</html>
+

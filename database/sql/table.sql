@@ -16,3 +16,32 @@ CREATE TABLE matches (
     score_home TINYINT,
     score_away TINYINT
 );
+
+/*table that stores leagues*/
+CREATE TABLE leagues (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    created_by INT,
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+/*table that keeps track what users are part of what leagues*/
+CREATE TABLE user_league (
+    user_id INT,
+    league_id INT,
+    points INT DEFAULT 0,
+    PRIMARY KEY (user_id, league_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (league_id) REFERENCES leagues(id)
+);
+
+/*table that keeps track of league board messages*/
+CREATE TABLE messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    league_id INT,
+    user_id INT,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (league_id) REFERENCES leagues(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
