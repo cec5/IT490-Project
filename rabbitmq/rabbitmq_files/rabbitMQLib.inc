@@ -17,9 +17,9 @@ class rabbitMQServer {
 
     	function __construct($machine, $server = "rabbitMQ"){
         	$this->machine = getHostInfo(array($machine));
-        	$this->BROKER_HOST   = $this->machine[$server]["BROKER_HOST"];
-        	$this->BROKER_PORT   = $this->machine[$server]["BROKER_PORT"];
-        	$this->USER     = $this->machine[$server]["USER"];
+        	$this->BROKER_HOST = $this->machine[$server]["BROKER_HOST"];
+        	$this->BROKER_PORT = $this->machine[$server]["BROKER_PORT"];
+        	$this->USER = $this->machine[$server]["USER"];
         	$this->PASSWORD = $this->machine[$server]["PASSWORD"];
         	$this->VHOST = $this->machine[$server]["VHOST"];
         	if (isset( $this->machine[$server]["EXCHANGE_TYPE"])) {
@@ -126,9 +126,9 @@ class rabbitMQClient {
     
     	function __construct($machine, $server = "rabbitMQ") {
         	$this->machine = getHostInfo(array($machine));
-        	$this->BROKER_HOST   = $this->machine[$server]["BROKER_HOST"];
-        	$this->BROKER_PORT   = $this->machine[$server]["BROKER_PORT"];
-        	$this->USER     = $this->machine[$server]["USER"];
+        	$this->BROKER_HOST = $this->machine[$server]["BROKER_HOST"];
+        	$this->BROKER_PORT = $this->machine[$server]["BROKER_PORT"];
+        	$this->USER = $this->machine[$server]["USER"];
         	$this->PASSWORD = $this->machine[$server]["PASSWORD"];
         	$this->VHOST = $this->machine[$server]["VHOST"];
        		if (isset($this->machine[$server]["EXCHANGE_TYPE"])) {
@@ -236,16 +236,16 @@ class rabbitMQClient {
                 		'password' => $this->PASSWORD,
                 		'vhost' => $this->VHOST
             		);
-            	$conn = new AMQPConnection($params);
-            	$conn->connect();
-            	$channel = new AMQPChannel($conn);
-            	$exchange = new AMQPExchange($channel);
-            	$exchange->setName($this->exchange);
-            	$exchange->setType($this->exchange_type);
-            	$this->conn_queue = new AMQPQueue($channel);
-           	$this->conn_queue->setName($this->queue);
-            	$this->conn_queue->bind($exchange->getName(), $this->routing_key);
-            	return $exchange->publish($json_message, $this->routing_key);
+            		$conn = new AMQPConnection($params);
+            		$conn->connect();
+            		$channel = new AMQPChannel($conn);
+            		$exchange = new AMQPExchange($channel);
+            		$exchange->setName($this->exchange);
+            		$exchange->setType($this->exchange_type);
+            		$this->conn_queue = new AMQPQueue($channel);
+           		$this->conn_queue->setName($this->queue);
+            		$this->conn_queue->bind($exchange->getName(), $this->routing_key);
+            		return $exchange->publish($json_message, $this->routing_key);
 		} catch (Exception $e) {
             		die("Failed to send message to exchange: " . $e->getMessage() . "\n");
         	}
