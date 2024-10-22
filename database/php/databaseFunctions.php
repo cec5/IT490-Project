@@ -251,6 +251,24 @@ function getLeaderboard($leagueId) {
     	}
     	return array("success" => true, "leaderboard" => $leaderboard);
 }
+function getAllLeagues() {
+    	$db = dbConnect();
+    	$stmt = $db->prepare("SELECT id, name FROM leagues");
+    	if (!$stmt) {
+        	return array("success" => false, "message" => "Failed to prepare statement.");
+    	}
+    	$stmt->execute();
+    	$result = $stmt->get_result();
+    	$leagues = $result->fetch_all(MYSQLI_ASSOC);
+    	$stmt->close();
+    	$db->close();
+
+    	if (empty($leagues)) {
+        	return array("success" => false, "message" => "No leagues found.");
+    	}
+    	return array("success" => true, "leagues" => $leagues);
+}
+
 
 // League Message Functions
 function postMessage($userId, $leagueId, $message) {
