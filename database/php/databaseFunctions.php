@@ -94,7 +94,6 @@ function validateToken($token) {
     	}
 }
 
-
 function generateJWT($userId) {
     	$key = 'it490key';
     	$payload = [
@@ -220,13 +219,14 @@ function validateLeagueAccess($userId, $leagueId) {
     	$result = $stmt->get_result();
 
    	if ($result->num_rows > 0) {
+   		$stmt->close();
+    		$db->close();
         	return array("success" => true, "message" => "User has access to the league.");
     	} else {
+    		$stmt->close();
+    		$db->close();
         	return array("success" => false, "message" => "User does not have access to the league.");
     	}
-
-    	$stmt->close();
-    	$db->close();
 }
 
 function getLeaderboard($leagueId) {
@@ -269,6 +269,24 @@ function getAllLeagues() {
     	return array("success" => true, "leagues" => $leagues);
 }
 
+function getLeagueName($leagueId) {
+    	$db = dbConnect();
+    	$stmt = $db->prepare("SELECT name FROM leagues WHERE id = ?");
+    	if (!$stmt) {
+        	return array("success" => false, "message" => "Failed to prepare statement.");
+    	}
+    	$stmt->bind_param("i", $leagueId);
+    	$stmt->execute();
+    	$stmt->bind_result($leagueName);
+    	$stmt->fetch();
+    	$stmt->close();
+    	$db->close();
+
+    	if (empty($leagueName)) {
+        	return array("success" => false, "message" => "League not found.");
+    	}
+    	return array("success" => true, "league_name" => $leagueName);
+}
 
 // League Message Functions
 function postMessage($userId, $leagueId, $message) {

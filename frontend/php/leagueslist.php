@@ -1,43 +1,7 @@
 <?php
-// Include necessary files (header, client RabbitMQ)
 include 'header.php';
-require 'client_rmq_db.php';
-
-// Helper function to get the JWT token from the cookie
-function getJwtTokenFromCookie() {
-    return isset($_COOKIE['jwt_token']) ? $_COOKIE['jwt_token'] : null;
-}
-
-// Check if the user is logged in by checking the JWT token
-$token = getJwtTokenFromCookie();
-
-if (!$token) {
-    // No token found, redirect to the homepage with a message
-    echo "<script>
-        alert('You must be logged in to access this page.');
-        window.location.href = 'index.php';
-    </script>";
-    exit();
-}
-
-// Validate the token by sending it to the backend
-$request = array();
-$request['type'] = 'validate_session';
-$request['token'] = $token;
-
-$response = createRabbitMQClientDatabase($request);
-
-if (!$response['success']) {
-    // Token is invalid or expired, redirect to the homepage
-    echo "<script>
-        alert('Session expired or invalid. Please log in again.');
-        window.location.href = 'login.php';
-    </script>";
-    exit();
-}
-
-// Store the user ID for future use
-$userId = $response['userId'];
+include 'validation.php';
+require_once 'client_rmq_db.php';
 
 // Fetch the list of all leagues
 $request = array();
@@ -48,23 +12,22 @@ $leagues = isset($leaguesResponse['leagues']) && is_array($leaguesResponse['leag
 
 // Handle joining a league
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['join_league_id'])) {
-    $leagueIdToJoin = intval($_POST['join_league_id']);
+    	$leagueIdToJoin = intval($_POST['join_league_id']);
 
-    // Send request to join the league
-    $joinRequest = array();
-    $joinRequest['type'] = 'join_league';
-    $joinRequest['user_id'] = $userId;
-    $joinRequest['league_id'] = $leagueIdToJoin;
+    	// Send request to join the league
+    	$joinRequest = array();
+    	$joinRequest['type'] = 'join_league';
+   	$joinRequest['user_id'] = $userId;
+    	$joinRequest['league_id'] = $leagueIdToJoin;
 
-    $joinResponse = createRabbitMQClientDatabase($joinRequest);
+    	$joinResponse = createRabbitMQClientDatabase($joinRequest);
 
-    if ($joinResponse['success']) {
-        echo "<script>alert('Successfully joined the league!'); window.location.href = 'leagueslist.php';</script>";
-    } else {
-        echo "<div class='alert alert-danger'>Failed to join the league: {$joinResponse['message']}</div>";
-    }
+    	if ($joinResponse['success']) {
+        	echo "<script>alert('Successfully joined the league!'); window.location.href = 'leagueslist.php';</script>";
+    	} else {
+        	echo "<div class='alert alert-danger'>Failed to join the league: {$joinResponse['message']}</div>";
+    	}
 }
-
 ?>
 
 <!DOCTYPE html>

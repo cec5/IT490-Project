@@ -1,43 +1,7 @@
 <?php
-// Include necessary files (header, client RabbitMQ)
 include 'header.php';
-require 'client_rmq_db.php';
-
-// Helper function to get the JWT token from the cookie
-function getJwtTokenFromCookie() {
-    return isset($_COOKIE['jwt_token']) ? $_COOKIE['jwt_token'] : null;
-}
-
-// Check if the user is logged in by checking the JWT token
-$token = getJwtTokenFromCookie();
-
-if (!$token) {
-    // No token found, redirect to the homepage with a message
-    echo "<script>
-        alert('You must be logged in to access this page.');
-        window.location.href = 'index.php';
-    </script>";
-    exit();
-}
-
-// Validate the token by sending it to the backend
-$request = array();
-$request['type'] = 'validate_session';
-$request['token'] = $token;
-
-$response = createRabbitMQClientDatabase($request);
-
-if (!$response['success']) {
-    // Token is invalid or expired, redirect to the homepage
-    echo "<script>
-        alert('Session expired or invalid. Please log in again.');
-        window.location.href = 'login.php';
-    </script>";
-    exit();
-}
-
-// Store the user ID for future use
-$userId = $response['userId'];
+include 'validation.php';
+require_once 'client_rmq_db.php';
 
 // Get the list of leagues the user is part of
 $request = array();
@@ -49,27 +13,26 @@ $leagues = $leaguesResponse['leagues'];
 
 // If the form for creating a league is submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['league_name']) && !empty(trim($_POST['league_name']))) {
-        $leagueName = trim($_POST['league_name']);
+    	if (isset($_POST['league_name']) && !empty(trim($_POST['league_name']))) {
+        	$leagueName = trim($_POST['league_name']);
 
-        // Send request to create a new league
-        $createRequest = array();
-        $createRequest['type'] = 'create_league';
-        $createRequest['user_id'] = $userId;
-        $createRequest['league_name'] = $leagueName;
+        	// Send request to create a new league
+        	$createRequest = array();
+        	$createRequest['type'] = 'create_league';
+        	$createRequest['user_id'] = $userId;
+        	$createRequest['league_name'] = $leagueName;
 
-        $createResponse = createRabbitMQClientDatabase($createRequest);
+        	$createResponse = createRabbitMQClientDatabase($createRequest);
 
-        if ($createResponse['success']) {
-            echo "<script>alert('League created successfully!'); window.location.href = 'myleagues.php';</script>";
-        } else {
-            echo "<div class='alert alert-danger'>Failed to create the league: {$createResponse['message']}</div>";
-        }
-    } else {
-        echo "<div class='alert alert-danger'>Please enter a valid league name.</div>";
-    }
+        	if ($createResponse['success']) {
+            		echo "<script>alert('League created successfully!'); window.location.href = 'myleagues.php';</script>";
+        	} else {
+            		echo "<div class='alert alert-danger'>Failed to create the league: {$createResponse['message']}</div>";
+        	}
+    	} else {
+        	echo "<div class='alert alert-danger'>Please enter a valid league name.</div>";
+    	}
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -115,4 +78,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

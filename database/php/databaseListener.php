@@ -33,6 +33,8 @@ function requestProcessor($request){
     			return getLeaderboard($request['league_id']);
     		case "get_all_leagues":
     			return getAllLeagues();
+    		case "get_league_name":
+    			return getLeagueName($request['league_id']);
         	case "post_message":
             		return postMessage($request['user_id'], $request['league_id'], $request['message']);
         	case "get_messages":

@@ -1,55 +1,38 @@
 <?php
-// Include necessary files (header, client RabbitMQ)
 include 'header.php';
-require 'client_rmq_db.php';
-
-// Helper function to get the JWT token from the cookie
-function getJwtTokenFromCookie() {
-    return isset($_COOKIE['jwt_token']) ? $_COOKIE['jwt_token'] : null;
-}
-
-// Check if the user is logged in by checking the JWT token
-$token = getJwtTokenFromCookie();
-
-if (!$token) {
-    // No token found, redirect to the homepage with a message
-    echo "<script>
-        alert('You must be logged in to access this page.');
-        window.location.href = 'index.php';
-    </script>";
-    exit();
-}
-
-// Validate the token by sending it to the backend
-$request = array();
-$request['type'] = 'validate_session';
-$request['token'] = $token;
-
-$response = createRabbitMQClientDatabase($request);
-
-if (!$response['success']) {
-    // Token is invalid or expired, redirect to the homepage
-    echo "<script>
-        alert('Session expired or invalid. Please log in again.');
-        window.location.href = 'login.php';
-    </script>";
-    exit();
-}
-
-// Store the user ID for future use
-$userId = $response['userId'];
+include 'validation.php';
+require_once 'client_rmq_db.php';
 
 // Get the league ID from the URL
 $leagueId = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if (!$leagueId) {
-    // No league ID found, redirect to the homepage
-    echo "<script>
-        alert('Invalid league.');
-        window.location.href = 'index.php';
-    </script>";
-    exit();
+    	// No league ID found, redirect to the homepage
+    	echo "<script>
+        	alert('Invalid league.');
+        	window.location.href = 'index.php';
+    	</script>";
+    	exit();
 }
+
+// Fetch the league name
+$request = array();
+$request['type'] = 'get_league_name';
+$request['league_id'] = $leagueId;
+
+$leagueNameResponse = createRabbitMQClientDatabase($request);
+
+if (!$leagueNameResponse['success']) {
+    	// League name not found, redirect to the homepage
+    	echo "<script>
+        	alert('League not found.');
+        	window.location.href = 'index.php';
+    	</script>";
+    	exit();
+}
+
+// Store the league name
+$leagueName = $leagueNameResponse['league_name'];
 
 // Check if the user is part of this league
 $request = array();
@@ -60,12 +43,12 @@ $request['league_id'] = $leagueId;
 $accessResponse = createRabbitMQClientDatabase($request);
 
 if (!$accessResponse['success']) {
-    // User is not part of this league, deny access
-    echo "<script>
-        alert('You are not a member of this league.');
-        window.location.href = 'myleagues.php';
-    </script>";
-    exit();
+    	// User is not part of this league, deny access
+    	echo "<script>
+        	alert('You are not a member of this league.');
+        	window.location.href = 'myleagues.php';
+    	</script>";
+    	exit();
 }
 
 // Fetch the leaderboard
@@ -86,45 +69,44 @@ $messages = $messagesResponse['messages'];
 
 // Handle message posting
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
-    $messageContent = trim($_POST['message']);
+    	$messageContent = trim($_POST['message']);
 
-    if (!empty($messageContent)) {
-        // Send request to post the message
-        $postRequest = array();
-        $postRequest['type'] = 'post_message';
-        $postRequest['user_id'] = $userId;
-        $postRequest['league_id'] = $leagueId;
-        $postRequest['message'] = $messageContent;
+    	if (!empty($messageContent)) {
+        	// Send request to post the message
+        	$postRequest = array();
+        	$postRequest['type'] = 'post_message';
+        	$postRequest['user_id'] = $userId;
+        	$postRequest['league_id'] = $leagueId;
+        	$postRequest['message'] = $messageContent;
 
-        $postResponse = createRabbitMQClientDatabase($postRequest);
+        	$postResponse = createRabbitMQClientDatabase($postRequest);
 
-        if ($postResponse['success']) {
-            echo "<script>alert('Message posted successfully!'); window.location.href = 'league.php?id={$leagueId}';</script>";
-        } else {
-            echo "<div class='alert alert-danger'>Failed to post the message: {$postResponse['message']}</div>";
-        }
-    } else {
-        echo "<div class='alert alert-danger'>Please enter a valid message.</div>";
-    }
+        	if ($postResponse['success']) {
+            		echo "<script>alert('Message posted successfully!'); window.location.href = 'league.php?id={$leagueId}';</script>";
+        	} else {
+            		echo "<div class='alert alert-danger'>Failed to post the message: {$postResponse['message']}</div>";
+        	}
+    	} else {
+        	echo "<div class='alert alert-danger'>Please enter a valid message.</div>";
+    	}
 }
 
 // Handle leaving the league
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_league'])) {
-    // Send request to leave the league
-    $leaveRequest = array();
-    $leaveRequest['type'] = 'leave_league';
-    $leaveRequest['user_id'] = $userId;
-    $leaveRequest['league_id'] = $leagueId;
+    	// Send request to leave the league
+    	$leaveRequest = array();
+    	$leaveRequest['type'] = 'leave_league';
+    	$leaveRequest['user_id'] = $userId;
+    	$leaveRequest['league_id'] = $leagueId;
 
-    $leaveResponse = createRabbitMQClientDatabase($leaveRequest);
+    	$leaveResponse = createRabbitMQClientDatabase($leaveRequest);
 
-    if ($leaveResponse['success']) {
-        echo "<script>alert('You have left the league.'); window.location.href = 'myleagues.php';</script>";
-    } else {
-        echo "<div class='alert alert-danger'>Failed to leave the league: {$leaveResponse['message']}</div>";
-    }
+    	if ($leaveResponse['success']) {
+        	echo "<script>alert('You have left the league.'); window.location.href = 'myleagues.php';</script>";
+    	} else {
+        	echo "<div class='alert alert-danger'>Failed to leave the league: {$leaveResponse['message']}</div>";
+    	}
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -132,13 +114,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_league'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>League Details</title>
+    <title><?php echo htmlspecialchars($leagueName); ?> - League Details</title>
     <!-- Bootstrap CSS -->
     <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container mt-5">
-        <h2 class="mb-4">League Leaderboard</h2>
+        <h2 class="mb-4"><?php echo htmlspecialchars($leagueName); ?> Leaderboard</h2>
 
         <!-- Display the leaderboard -->
         <?php if (!empty($leaderboard)): ?>
@@ -164,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_league'])) {
 
         <hr>
 
-        <h4>League Message Board</h4>
+        <h4><?php echo htmlspecialchars($leagueName); ?> Message Board</h4>
 
         <!-- Display the messages -->
         <?php if (!empty($messages)): ?>
@@ -205,4 +187,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_league'])) {
     <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
