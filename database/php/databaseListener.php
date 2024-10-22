@@ -10,19 +10,6 @@ function requestProcessor($request){
 	if(!isset($request['type'])){
 		return "ERROR: unsupported message type";
 	}
-	
-  	// Check if the request includes a token for validation
-  	if (isset($request['token'])) {
-  		// Validate the token
-        	$isValid = validateToken($request['token']);
-        	if (!$isValid) {
-        		return array("success" => false, "message" => "Invalid or expired token.");
-        	}
-        	// Extract the user ID from the token
-        	$userId = $isValid->sub;
-        } else {
-        	return array("success" => false, "message" => "Authentication token required.");
-        }
         
         switch ($request['type']){
  		case "test":
@@ -33,7 +20,7 @@ function requestProcessor($request){
 	  		$result = doRegister($request['username'], $request['email'], $request['password']);
 	  		return $result; // Return the array with success and message
         	case "validate_session":
-            		return validateToken($request['sessionId']);
+            		return validateToken($request['token']);
 	  	case "create_league":
 	  		return createLeague($userId, $request['league_name']);
         	case "join_league":

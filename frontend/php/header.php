@@ -34,9 +34,17 @@
 
     <!-- Logout script and conditional display for Logout button -->
     <script>
+        // Helper function to get a cookie value by name
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
-            // Check for JWT token in localStorage
-            if (localStorage.getItem('token')) {
+            // Check for JWT token in cookies
+            const jwtToken = getCookie('jwt_token');
+            if (jwtToken) {
                 // Show the Logout button and hide Login/Register links
                 document.getElementById("logoutButton").style.display = "block";
                 document.querySelector('a[href="login.php"]').style.display = "none";
@@ -45,9 +53,11 @@
         });
 
         function logout() {
-            // Remove the JWT token from localStorage
-            localStorage.removeItem('token');
-            // Redirect to the login page
+            // Remove the JWT token cookie by setting its expiration to a past date
+            document.cookie = "jwt_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             window.location.href = 'login.php';
         }
     </script>
+</body>
+</html>
+

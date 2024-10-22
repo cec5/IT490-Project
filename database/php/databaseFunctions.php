@@ -82,14 +82,18 @@ function doLogin($username, $password) {
 
 // Session Validation (JWT)
 function validateToken($token) {
-    	// Decode and verify the JWT
-    	try {
-        	$decoded = JWT::decode($token, 'it490key', ['HS256']);
-        	return $decoded; // User is authenticated
+	try {
+        	// Decoding the token with the secret key and allowed algorithms
+        	$decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key('it490key', 'HS256'));
+
+        	// Return success and the decoded token data
+        	return array("success" => true, "message" => "Token is valid.", "userId" => $decoded->sub);
     	} catch (Exception $e) {
-        	return false; // Invalid token
+        	// Handle token validation errors (e.g., expired token)
+        	return array("success" => false, "message" => "Invalid or expired token.");
     	}
 }
+
 
 function generateJWT($userId) {
     	$key = 'it490key';
