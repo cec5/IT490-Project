@@ -182,7 +182,7 @@ function leaveLeague($userId, $leagueId) {
 }
 
 function getUserLeagues($userId) {
-    echo "Fetching leagues for user ID: $userId".PHP_EOL;
+    //echo "Fetching leagues for user ID: $userId".PHP_EOL;
 
     $db = dbConnect();
     $stmt = $db->prepare("SELECT leagues.id, leagues.name FROM user_league
@@ -193,7 +193,7 @@ function getUserLeagues($userId) {
     $result = $stmt->get_result();
     $leagues = $result->fetch_all(MYSQLI_ASSOC);
 
-    echo "Leagues found: ".print_r($leagues, true).PHP_EOL;
+    //echo "Leagues found: ".print_r($leagues, true).PHP_EOL;
 
     $stmt->close();
     $db->close();
@@ -204,6 +204,7 @@ function getUserLeagues($userId) {
 
     return array("success" => true, "leagues" => $leagues);
 }
+
 
 // League Message Functions
 function postMessage($userId, $leagueId, $message) {
