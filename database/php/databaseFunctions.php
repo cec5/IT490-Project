@@ -110,18 +110,28 @@ function generateJWT($userId) {
 function createLeague($userId, $leagueName) {
     	$db = dbConnect();
     	$stmt = $db->prepare("INSERT INTO leagues (name, created_by) VALUES (?, ?)");
+    	if (!$stmt) {
+        	return array("success" => false, "message" => "Failed to prepare statement.");
+    	}
     	$stmt->bind_param("si", $leagueName, $userId);
     	$stmt->execute();
-    	$leagueId = $stmt->insert_id;
 
-    	// Add the user to the league they just created
-    	$stmt = $db->prepare("INSERT INTO user_league (user_id, league_id) VALUES (?, ?)");
-    	$stmt->bind_param("ii", $userId, $leagueId);
-    	$stmt->execute();
+    	if ($stmt->affected_rows > 0) {
+        	// Add the user to the league they just created
+        	$leagueId = $stmt->insert_id;
+        	$stmt = $db->prepare("INSERT INTO user_league (user_id, league_id) VALUES (?, ?)");
+        	$stmt->bind_param("ii", $userId, $leagueId);
+        	$stmt->execute();
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => true, "message" => "League created successfully.");
+    	}	
 
     	$stmt->close();
     	$db->close();
+    	return array("success" => false, "message" => "Failed to create league.");
 }
+
 
 function joinLeague($userId, $leagueId) {
     	$db = dbConnect();
@@ -182,54 +192,107 @@ function leaveLeague($userId, $leagueId) {
 }
 
 function getUserLeagues($userId) {
-    //echo "Fetching leagues for user ID: $userId".PHP_EOL;
+    	$db = dbConnect();
+   	$stmt = $db->prepare("SELECT leagues.id, leagues.name FROM user_league
+   				JOIN leagues ON user_league.league_id = leagues.id
+                          	WHERE user_league.user_id = ?");
+    	if (!$stmt) {
+        	return array("success" => false, "message" => "Failed to prepare statement.");
+    	}
+    	$stmt->bind_param("i", $userId);
+    	$stmt->execute();
+    	$result = $stmt->get_result();
+    	$leagues = $result->fetch_all(MYSQLI_ASSOC);
+    	$stmt->close();
+    	$db->close();
 
-    $db = dbConnect();
-    $stmt = $db->prepare("SELECT leagues.id, leagues.name FROM user_league
-                          JOIN leagues ON user_league.league_id = leagues.id
-                          WHERE user_league.user_id = ?");
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $leagues = $result->fetch_all(MYSQLI_ASSOC);
-
-    //echo "Leagues found: ".print_r($leagues, true).PHP_EOL;
-
-    $stmt->close();
-    $db->close();
-
-    if (empty($leagues)) {
-        return array("success" => false, "message" => "No leagues found for this user.");
-    }
-
-    return array("success" => true, "leagues" => $leagues);
+    	if (empty($leagues)) {
+        	return array("success" => false, "message" => "No leagues found for this user.");
+    	}
+    	return array("success" => true, "leagues" => $leagues);
 }
 
+function validateLeagueAccess($userId, $leagueId) {
+    	$db = dbConnect();
+    	$stmt = $db->prepare("SELECT * FROM user_league WHERE user_id = ? AND league_id = ?");
+    	$stmt->bind_param("ii", $userId, $leagueId);
+    	$stmt->execute();
+    	$result = $stmt->get_result();
+
+   	if ($result->num_rows > 0) {
+        	return array("success" => true, "message" => "User has access to the league.");
+    	} else {
+        	return array("success" => false, "message" => "User does not have access to the league.");
+    	}
+
+    	$stmt->close();
+    	$db->close();
+}
+
+function getLeaderboard($leagueId) {
+    	$db = dbConnect();
+    	$stmt = $db->prepare("SELECT users.username, user_league.points 
+                          	FROM user_league 
+                          	JOIN users ON user_league.user_id = users.id 
+                          	WHERE user_league.league_id = ? 
+                          	ORDER BY points DESC");
+    	if (!$stmt) {
+        	return array("success" => false, "message" => "Failed to prepare statement.");
+    	}
+    	$stmt->bind_param("i", $leagueId);
+    	$stmt->execute();
+    	$result = $stmt->get_result();
+    	$leaderboard = $result->fetch_all(MYSQLI_ASSOC);
+    	$stmt->close();
+    	$db->close();
+
+    	if (empty($leaderboard)) {
+        	return array("success" => false, "message" => "No leaderboard data found.");
+    	}
+    	return array("success" => true, "leaderboard" => $leaderboard);
+}
 
 // League Message Functions
 function postMessage($userId, $leagueId, $message) {
     	$db = dbConnect();
     	$stmt = $db->prepare("INSERT INTO messages (user_id, league_id, message) VALUES (?, ?, ?)");
+   	if (!$stmt) {
+        	return array("success" => false, "message" => "Failed to prepare statement.");
+    	}
     	$stmt->bind_param("iis", $userId, $leagueId, $message);
     	$stmt->execute();
+
+    	if ($stmt->affected_rows > 0) {
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => true, "message" => "Message posted successfully.");
+    	}	
+
     	$stmt->close();
     	$db->close();
-    	return true;
+    	return array("success" => false, "message" => "Failed to post message.");
 }
 
 function getMessages($leagueId) {
     	$db = dbConnect();
     	$stmt = $db->prepare("SELECT users.username, messages.message, messages.created_at
-		FROM messages
-                JOIN users ON messages.user_id = users.id
+        	FROM messages
+        	JOIN users ON messages.user_id = users.id
         	WHERE league_id = ?
-                ORDER BY messages.created_at DESC");
+        	ORDER BY messages.created_at DESC");
+    	if (!$stmt) {
+        	return array("success" => false, "message" => "Failed to prepare statement.");
+    	}
     	$stmt->bind_param("i", $leagueId);
     	$stmt->execute();
     	$result = $stmt->get_result();
     	$messages = $result->fetch_all(MYSQLI_ASSOC);
     	$stmt->close();
     	$db->close();
-    	return $messages;
+
+    	if (empty($messages)) {
+        	return array("success" => false, "message" => "No messages found.");
+    	}
+    	return array("success" => true, "messages" => $messages);
 }
 ?>

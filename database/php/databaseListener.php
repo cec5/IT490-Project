@@ -27,8 +27,12 @@ function requestProcessor($request){
             		return leaveLeague($request['user_id'], $request['league_id']);
             	case "get_user_leagues":
     			return getUserLeagues($request['user_id']);
+    		case "validate_league_access":
+    			return validateLeagueAccess($request['user_id'], $request['league_id']);
+    		case "get_leaderboard":
+    			return getLeaderboard($request['league_id']);
         	case "post_message":
-            		return postMessage($userId, $request['league_id'], $request['message']);
+            		return postMessage($request['user_id'], $request['league_id'], $request['message']);
         	case "get_messages":
             		return getMessages($request['league_id']);
   	}

@@ -41,7 +41,7 @@ CREATE TABLE messages (
     league_id INT,
     user_id INT,
     message TEXT NOT NULL,
-    epoch INT(11) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (league_id) REFERENCES leagues(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
