@@ -1,7 +1,7 @@
 <?php
 // Include the RabbitMQ client
 require_once 'client_rmq_db.php';
-require_once 'header.php';
+include 'header.php';
 
 // Helper function to get the JWT token from the cookie
 function getJwtTokenFromCookie() {

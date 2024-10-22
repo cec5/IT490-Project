@@ -23,7 +23,10 @@
                     <li class="nav-item">
                         <a class="nav-link" href="register.php">Register</a>
                     </li>
-                    <!-- Logout Button, initially hidden -->
+                    <!-- Buttons hidden when not logged in -->
+                    <li class="nav-item" id="myLeagues" style="display: none;">
+                        <a class="nav-link" href="myleagues.php"">My Leagues</a>
+                    </li>
                     <li class="nav-item" id="logoutButton" style="display: none;">
                         <a class="nav-link" href="#" onclick="logout()">Logout</a>
                     </li>
@@ -47,6 +50,7 @@
             if (jwtToken) {
                 // Show the Logout button and hide Login/Register links
                 document.getElementById("logoutButton").style.display = "block";
+                document.getElementById("myLeagues").style.display = "block";
                 document.querySelector('a[href="login.php"]').style.display = "none";
                 document.querySelector('a[href="register.php"]').style.display = "none";
             }

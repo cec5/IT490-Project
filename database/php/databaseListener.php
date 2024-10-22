@@ -10,23 +10,23 @@ function requestProcessor($request){
 	if(!isset($request['type'])){
 		return "ERROR: unsupported message type";
 	}
-        
         switch ($request['type']){
  		case "test":
-			return "test message recieved from the database server".PHP_EOL;
+			return "test message received from the database server".PHP_EOL;
 		case "login":
 			return doLogin($request['username'], $request['password']);
 		case "register":
-	  		$result = doRegister($request['username'], $request['email'], $request['password']);
-	  		return $result; // Return the array with success and message
+	  		return doRegister($request['username'], $request['email'], $request['password']);
         	case "validate_session":
             		return validateToken($request['token']);
 	  	case "create_league":
-	  		return createLeague($userId, $request['league_name']);
+	  		return createLeague($request['user_id'], $request['league_name']);
         	case "join_league":
-            		return joinLeague($userId, $request['league_id']);
+            		return joinLeague($request['user_id'], $request['league_id']);
             	case "leave_league":
-            		return leaveLeague($userId, $request['league_id']);
+            		return leaveLeague($request['user_id'], $request['league_id']);
+            	case "get_user_leagues":
+    			return getUserLeagues($request['user_id']);
         	case "post_message":
             		return postMessage($userId, $request['league_id'], $request['message']);
         	case "get_messages":
