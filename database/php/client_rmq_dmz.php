@@ -6,7 +6,6 @@ require_once('../rabbitmq_files/rabbitMQLib.inc');
 
 function createRabbitMQClientDMZ($request){
 
-	//Largely copied from the test client
 	//Use this to handle rmq requests to the dmz
 	//Still using testServer for now as it works but may change later
 	

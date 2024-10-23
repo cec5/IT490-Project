@@ -1,5 +1,6 @@
 <?php
-require 'vendor/autoload.php';
+require_once 'vendor/autoload.php';
+require_once 'client_rmq_dmz.php';
 use \Firebase\JWT\JWT;
 
 // Initialize the MySQLi connection
@@ -331,4 +332,14 @@ function getMessages($leagueId) {
     	}
     	return array("success" => true, "messages" => $messages);
 }
+
+// API-Related Functions
+
+// This function would populate the database with the players
+// Would only need to be run once but include checks to prevent multiple instances of players, SIMPLIFY POSITIONS! Convert all Midfielders (center, left, etc) into Midfielders and all Forwards (wingers, center, offence) into Forwards BEFORE inserting into database, for simplicity sake down the line
+function addPlayersIntoDatabase(){
+	$requestPlayers = array();
+	$requestPlayers['type'] = 'get_league_players';
+	$premierLeaguePlayersList = createRabbitMQClientDMZ($requestPlayers)
+	
 ?>
