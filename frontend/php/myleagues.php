@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <ul class="list-group">
                 <?php foreach ($leagues as $league): ?>
                     <li class="list-group-item">
-                        <a href="league.php?id=<?php echo $league['id']; ?>"><?php echo htmlspecialchars($league['name']); ?></a>
+                        <a href="league.php?league_id=<?php echo $league['id']; ?>"><?php echo htmlspecialchars($league['name']); ?></a>
                     </li>
                 <?php endforeach; ?>
             </ul>

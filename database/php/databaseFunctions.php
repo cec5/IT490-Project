@@ -1,5 +1,6 @@
 <?php
-require 'vendor/autoload.php';
+require_once 'vendor/autoload.php';
+require_once 'client_rmq_dmz.php';
 use \Firebase\JWT\JWT;
 
 // Initialize the MySQLi connection
@@ -160,29 +161,44 @@ function joinLeague($userId, $leagueId) {
 function leaveLeague($userId, $leagueId) {
     	$db = dbConnect();
 
-    	// Check if the user is a part of the league
+    	// Check if the user is part of the league
     	$stmt = $db->prepare("SELECT * FROM user_league WHERE user_id = ? AND league_id = ?");
     	$stmt->bind_param("ii", $userId, $leagueId);
     	$stmt->execute();
     	$result = $stmt->get_result();
 
     	if ($result->num_rows === 0) {
-        	// The user is not part of the league
+        	// User is not part of the league
         	$stmt->close();
         	$db->close();
         	return array("success" => false, "message" => "User is not a member of this league.");
     	}
+    	$stmt->close();
 
-    	// Remove the user from the user_league table
+    	// Remove the user's drafted players from the league
+    	$stmt = $db->prepare("DELETE FROM user_draft WHERE user_id = ? AND league_id = ?");
+    	$stmt->bind_param("ii", $userId, $leagueId);
+    	$stmt->execute();
+
+    	// Check if the deletion of drafted players was successful
+    	if ($stmt->affected_rows === 0) {
+        	// Handle case where there were no players to delete or deletion failed
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => false, "message" => "Error occurred while removing drafted players.");
+    	}
+    	$stmt->close();
+
+   	// Remove the user from the user_league table
     	$stmt = $db->prepare("DELETE FROM user_league WHERE user_id = ? AND league_id = ?");
     	$stmt->bind_param("ii", $userId, $leagueId);
     	$stmt->execute();
-    
+
     	// Check if the deletion was successful
     	if ($stmt->affected_rows > 0) {
         	$stmt->close();
         	$db->close();
-        	return array("success" => true, "message" => "User successfully left the league.");
+        	return array("success" => true, "message" => "User successfully left the league and players returned to the pool.");
     	} else {
         	$stmt->close();
         	$db->close();
@@ -331,4 +347,263 @@ function getMessages($leagueId) {
     	}
     	return array("success" => true, "messages" => $messages);
 }
+
+// League Players Related Functions
+function draftPlayer($userId, $leagueId, $playerId, $status) {
+    	$db = dbConnect();
+
+    	// Verify if the player is already drafted in the league
+    	$stmt = $db->prepare("SELECT * FROM user_draft WHERE league_id = ? AND player_id = ?");
+   	$stmt->bind_param("ii", $leagueId, $playerId);
+    	$stmt->execute();
+    	if ($stmt->get_result()->num_rows > 0) {
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => false, "message" => "Player already drafted in this league.");
+    	}
+
+    	// Check the user's current draft count for the specified position and status
+    	$stmt = $db->prepare("SELECT COUNT(*) AS count FROM user_draft 
+                          	JOIN players ON user_draft.player_id = players.id 
+                          	WHERE user_draft.user_id = ? AND user_draft.league_id = ? 
+                          	AND players.position = ? AND user_draft.status = ?");
+    	$position = ($status === 'active') ? 'Attacker' : 'Midfielder';
+    	$stmt->bind_param("iiss", $userId, $leagueId, $position, $status);
+    	$stmt->execute();
+    	$countResult = $stmt->get_result()->fetch_assoc();
+    	$draftCount = $countResult['count'] ?? 0;
+
+    	// Validate draft limits
+    	$maxDraft = ($status === 'active') ? 4 : 2;
+    	if ($draftCount >= $maxDraft) {
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => false, "message" => "Max $status players drafted for this position.");
+    	}
+
+    	// Proceed with drafting the player
+    	$stmt = $db->prepare("INSERT INTO user_draft (user_id, league_id, player_id, position, status) VALUES (?, ?, ?, ?, ?)");
+    	$stmt->bind_param("iiiss", $userId, $leagueId, $playerId, $position, $status);
+    	$stmt->execute();
+
+    	if ($stmt->affected_rows > 0) {
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => true, "message" => "Player drafted successfully as $status.");
+    	} else {
+    		$stmt->close();
+        	$db->close();
+        	return array("success" => false, "message" => "Failed to draft player.");
+    	}
+}
+
+function getUnselectedPlayers($leagueId, $filters = []) {
+    	$db = dbConnect();
+
+    	// Start building the query
+    	$query = "SELECT players.id, players.name, players.position, players.nationality, players.team 
+              	FROM players 
+              	LEFT JOIN user_draft ON players.id = user_draft.player_id AND user_draft.league_id = ?
+              	WHERE user_draft.player_id IS NULL";
+
+    	// Apply filters
+    	$params = [$leagueId];
+    	if (!empty($filters['name'])) {
+        	$query .= " AND players.name LIKE ?";
+        	$params[] = "%" . $filters['name'] . "%";
+    	}
+    	if (!empty($filters['country'])) {
+        	$query .= " AND players.nationality LIKE ?";
+        	$params[] = "%" . $filters['country'] . "%";
+    	}
+    	if (!empty($filters['position'])) {
+        	$query .= " AND players.position = ?";
+        	$params[] = $filters['position'];
+    	}
+    	if (!empty($filters['team'])) {
+        	$query .= " AND players.team LIKE ?";
+        	$params[] = "%" . $filters['team'] . "%";
+    	}
+
+    	$stmt = $db->prepare($query);
+    	$stmt->execute($params);
+    	$result = $stmt->get_result();
+    	$players = $result->fetch_all(MYSQLI_ASSOC);
+    	$stmt->close();
+    	$db->close();
+    	return array("success" => true, "players" => $players);
+}
+
+// Function to retrieve a user's roster (attackers and midfielders, active and reserve) in a given league
+function getUserRoster($userId, $leagueId) {
+    $db = dbConnect();
+    $query = "
+        SELECT user_draft.player_id, user_draft.status, players.name, players.position, players.team
+        FROM user_draft
+        JOIN players ON user_draft.player_id = players.id
+        WHERE user_draft.user_id = ? AND user_draft.league_id = ?
+    ";
+    $stmt = $db->prepare($query);
+    $stmt->bind_param("ii", $userId, $leagueId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $roster = ['attackers' => ['active' => [], 'reserve' => []], 'midfielders' => ['active' => [], 'reserve' => []]];
+
+    while ($row = $result->fetch_assoc()) {
+        $status = $row['status'];
+        $position = strtolower($row['position']) === 'attacker' ? 'attackers' : 'midfielders';
+        $roster[$position][$status][] = [
+            'id' => $row['player_id'],
+            'name' => $row['name'],
+            'team' => $row['team']
+        ];
+    }
+
+    $stmt->close();
+    $db->close();
+    return array("success" => true, "roster" => $roster);
+}
+
+// Function to swap an active player with a reserve player
+function swapPlayers($userId, $leagueId, $activePlayerId, $reservePlayerId) {
+    	$db = dbConnect();
+
+    	// Begin a transaction to ensure atomic swap
+    	$db->begin_transaction();
+
+    	// Update active player to reserve
+    	$stmt = $db->prepare("UPDATE user_draft SET status = 'reserve' WHERE user_id = ? AND league_id = ? AND player_id = ?");
+    	$stmt->bind_param("iii", $userId, $leagueId, $activePlayerId);
+    	$stmt->execute();
+
+    	// Update reserve player to active
+    	$stmt = $db->prepare("UPDATE user_draft SET status = 'active' WHERE user_id = ? AND league_id = ? AND player_id = ?");
+    	$stmt->bind_param("iii", $userId, $leagueId, $reservePlayerId);
+    	$stmt->execute();
+
+    	// Commit transaction
+    	if ($db->commit()) {
+        	$result = array("success" => true, "message" => "Players swapped successfully.");
+    	} else {
+        	$result = array("success" => false, "message" => "Failed to swap players.");
+    	}
+
+    	$stmt->close();
+    	$db->close();
+    	return $result;
+}
+
+// Function to promote a reserve player to active status
+function promoteReservePlayer($userId, $leagueId, $reservePlayerId) {
+    	$db = dbConnect();
+
+    	// Check if there are fewer than 4 active players for the player's position
+    	$stmt = $db->prepare("SELECT COUNT(*) AS active_count FROM user_draft JOIN players ON user_draft.player_id = players.id WHERE user_draft.user_id = ? AND user_draft.league_id = ? AND user_draft.status = 'active' AND players.position = (SELECT position FROM players WHERE id = ?)");
+    	$stmt->bind_param("iii", $userId, $leagueId, $reservePlayerId);
+    	$stmt->execute();
+    	$result = $stmt->get_result();
+    	$activeCount = $result->fetch_assoc()['active_count'];
+
+    	if ($activeCount >= 4) {
+        	$stmt->close();
+       	 	$db->close();
+        	return array("success" => false, "message" => "Cannot promote; active roster is full.");
+    	}
+
+    	// Promote reserve player to active
+    	$stmt = $db->prepare("UPDATE user_draft SET status = 'active' WHERE user_id = ? AND league_id = ? AND player_id = ?");
+    	$stmt->bind_param("iii", $userId, $leagueId, $reservePlayerId);
+    	$stmt->execute();
+
+    	if ($stmt->affected_rows > 0) {
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => true, "message" => "Player promoted to active.");
+    	} else {
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => false, "message" => "Failed to promote player.");
+    	}	
+}
+
+// Function to remove a player from the reserve roster
+function removeReservePlayer($userId, $leagueId, $reservePlayerId) {
+    	$db = dbConnect();
+
+    	// Ensure player is in reserve
+    	$stmt = $db->prepare("SELECT * FROM user_draft WHERE user_id = ? AND league_id = ? AND player_id = ? AND status = 'reserve'");
+    	$stmt->bind_param("iii", $userId, $leagueId, $reservePlayerId);
+    	$stmt->execute();
+    	$result = $stmt->get_result();
+
+    	if ($result->num_rows === 0) {
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => false, "message" => "Player not found in reserve.");
+    	}
+
+    	// Delete the reserve player from roster
+    	$stmt = $db->prepare("DELETE FROM user_draft WHERE user_id = ? AND league_id = ? AND player_id = ?");
+    	$stmt->bind_param("iii", $userId, $leagueId, $reservePlayerId);
+    	$stmt->execute();
+
+    	if ($stmt->affected_rows > 0) {
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => true, "message" => "Player removed from reserve.");
+    	} else {
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => false, "message" => "Failed to remove player.");
+    	}
+}
+
+// API-Related Functions
+
+function addPlayersIntoDatabase(){
+	$requestPlayers = array();
+	$requestPlayers['type'] = 'get_league_players';
+	$premierLeaguePlayersList = createRabbitMQClientDMZ($requestPlayers);
+		
+	if (!$premierLeaguePlayersList) {
+        	echo "Failed to retrieve players.\n";
+	        return;
+	}
+
+	// Database connection
+	$db = dbConnect();
+
+	// Prepare the insert statement with ? placeholders
+	$stmt = $db->prepare("INSERT INTO players (id, name, nationality, position, team)
+                          VALUES (?, ?, ?, ?, ?)
+                          ON DUPLICATE KEY UPDATE name = VALUES(name), nationality = VALUES(nationality), position = VALUES(position), team = VALUES(team)");
+
+	if (!$stmt) {
+		echo "Prepare failed: (" . $db->errno . ") " . $db->error;
+		return;
+	}
+
+	// Loop through each player and insert/update in the database
+	foreach ($premierLeaguePlayersList as $player) {
+		$playerPosition = stripos($player['position'], 'midfield') !== false ? "Midfielder" : "Attacker";
+
+		// Bind parameters: "issss" - i for int, s for strings
+		$stmt->bind_param(
+            		"issss",
+            		$player['id'],
+            		$player['name'],
+            		$player['nationality'],
+            		$playerPosition,
+            		$player['team']
+        	);
+
+        	$stmt->execute();
+		if ($stmt->error) {
+			echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+		}
+    	}
+	$stmt->close();
+	$db->close();
+}	
 ?>

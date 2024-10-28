@@ -39,6 +39,18 @@ function requestProcessor($request){
             		return postMessage($request['user_id'], $request['league_id'], $request['message']);
         	case "get_messages":
             		return getMessages($request['league_id']);
+            	case "get_unselected_players":
+    			return getUnselectedPlayers($request['league_id'], $request['filters']);
+    		case "draft_player":
+    			return draftPlayer($request['user_id'], $request['league_id'], $request['player_id'], $request['status']);
+		case "get_user_roster":
+    			return getUserRoster($request['user_id'], $request['league_id']);
+		case "swap_players":
+    			return swapPlayers($request['user_id'], $request['league_id'], $request['active_player_id'], $request['reserve_player_id']);
+		case "promote_reserve":
+    			return promoteReservePlayer($request['user_id'], $request['league_id'], $request['reserve_player_id']);
+		case "remove_reserve":
+    			return removeReservePlayer($request['user_id'], $request['league_id'], $request['reserve_player_id']);
   	}
 	return array("returnCode" => '0', 'message'=>"Database Server received request and processed");
 }

@@ -1,55 +1,8 @@
 <?php
 include 'header.php';
 include 'validation.php';
+include 'leagueValidation.php';
 require_once 'client_rmq_db.php';
-
-// Get the league ID from the URL
-$leagueId = isset($_GET['id']) ? intval($_GET['id']) : 0;
-
-if (!$leagueId) {
-    	// No league ID found, redirect to the homepage
-    	echo "<script>
-        	alert('Invalid league.');
-        	window.location.href = 'index.php';
-    	</script>";
-    	exit();
-}
-
-// Fetch the league name
-$request = array();
-$request['type'] = 'get_league_name';
-$request['league_id'] = $leagueId;
-
-$leagueNameResponse = createRabbitMQClientDatabase($request);
-
-if (!$leagueNameResponse['success']) {
-    	// League name not found, redirect to the homepage
-    	echo "<script>
-        	alert('League not found.');
-        	window.location.href = 'index.php';
-    	</script>";
-    	exit();
-}
-
-// Store the league name
-$leagueName = $leagueNameResponse['league_name'];
-
-// Check if the user is part of this league
-$request = array();
-$request['type'] = 'validate_league_access';
-$request['user_id'] = $userId;
-$request['league_id'] = $leagueId;
-
-$accessResponse = createRabbitMQClientDatabase($request);
-
-if (!$accessResponse['success']) {
-    	// User is not part of this league, deny access
-    	echo "<script>
-        	alert('You are not a member of this league.');
-        	window.location.href = 'myleagues.php';
-    	</script>";
-    	exit();
-}
 
 // Fetch the leaderboard
 $request = array();
@@ -167,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_league'])) {
 
         <!-- Form to post a message -->
         <h5>Post a Message</h5>
-        <form action="league.php?id=<?php echo $leagueId; ?>" method="POST">
+        <form action="league.php?league_id=<?php echo $leagueId; ?>" method="POST">
             <div class="mb-3">
                 <textarea class="form-control" name="message" rows="3" required></textarea>
             </div>
@@ -177,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_league'])) {
         <hr>
 
         <!-- Red button to leave the league -->
-        <form action="league.php?id=<?php echo $leagueId; ?>" method="POST">
+        <form action="league.php?league_id=<?php echo $leagueId; ?>" method="POST">
             <input type="hidden" name="leave_league" value="1">
             <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to leave this league?');">Leave League</button>
         </form>
