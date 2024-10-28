@@ -341,5 +341,29 @@ function addPlayersIntoDatabase(){
 	$requestPlayers = array();
 	$requestPlayers['type'] = 'get_league_players';
 	$premierLeaguePlayersList = createRabbitMQClientDMZ($requestPlayers)
-	
+		
+	if (!$premierLeaguePlayersList) {
+        	echo "Failed to retrieve players.\n";
+	        return;
+	}
+
+	// Database connection (assuming you have a function for this)
+	$db = dbConnect();
+
+	// Prepare the insert statement with placeholders
+	$stmt = $db->prepare("INSERT INTO players (id, name, nationality, position, team)
+                          VALUES (:id, :name, :nationality, :position, :team)
+                          ON DUPLICATE KEY UPDATE name=:name, nationality=:nationality, position=:position, team=:team");
+
+	// Loop through each player and insert/update in the database
+	foreach ($premierLeaguePlayersList as $player) {
+        $stmt->execute([
+            ':id' => $player['id'],
+            ':name' => $player['name'],
+            ':nationality' => $player['nationality'],
+            ':position' => $player['position'],
+            ':team' => $player['team']
+        ]);
+    }
+}	
 ?>
