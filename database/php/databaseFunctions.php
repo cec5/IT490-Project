@@ -340,30 +340,46 @@ function getMessages($leagueId) {
 function addPlayersIntoDatabase(){
 	$requestPlayers = array();
 	$requestPlayers['type'] = 'get_league_players';
-	$premierLeaguePlayersList = createRabbitMQClientDMZ($requestPlayers)
+	$premierLeaguePlayersList = createRabbitMQClientDMZ($requestPlayers);
 		
 	if (!$premierLeaguePlayersList) {
         	echo "Failed to retrieve players.\n";
 	        return;
 	}
 
-	// Database connection (assuming you have a function for this)
+	// Database connection
 	$db = dbConnect();
 
-	// Prepare the insert statement with placeholders
+	// Prepare the insert statement with ? placeholders
 	$stmt = $db->prepare("INSERT INTO players (id, name, nationality, position, team)
-                          VALUES (:id, :name, :nationality, :position, :team)
-                          ON DUPLICATE KEY UPDATE name=:name, nationality=:nationality, position=:position, team=:team");
+                          VALUES (?, ?, ?, ?, ?)
+                          ON DUPLICATE KEY UPDATE name = VALUES(name), nationality = VALUES(nationality), position = VALUES(position), team = VALUES(team)");
+
+	if (!$stmt) {
+		echo "Prepare failed: (" . $db->errno . ") " . $db->error;
+		return;
+	}
 
 	// Loop through each player and insert/update in the database
 	foreach ($premierLeaguePlayersList as $player) {
-        $stmt->execute([
-            ':id' => $player['id'],
-            ':name' => $player['name'],
-            ':nationality' => $player['nationality'],
-            ':position' => $player['position'],
-            ':team' => $player['team']
-        ]);
-    }
+		$playerPosition = stripos($player['position'], 'midfield') !== false ? "Midfielder" : "Attacker";
+
+		// Bind parameters: "issss" - i for int, s for strings
+		$stmt->bind_param(
+            		"issss",
+            		$player['id'],
+            		$player['name'],
+            		$player['nationality'],
+            		$playerPosition,
+            		$player['team']
+        	);
+
+        	$stmt->execute();
+		if ($stmt->error) {
+			echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+		}
+    	}
+	$stmt->close();
+	$db->close();
 }	
 ?>
