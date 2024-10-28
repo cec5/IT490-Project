@@ -54,3 +54,16 @@ CREATE TABLE players (
 	position VARCHAR(50),
 	team VARCHAR(50)
 );
+
+/*stores selected players by users per league*/
+CREATE TABLE user_draft (
+    	user_id INT,
+    	league_id INT,
+    	player_id INT,
+    	position VARCHAR(50),
+    	status ENUM('active', 'reserve') NOT NULL,
+    	PRIMARY KEY (user_id, league_id, player_id),
+    	FOREIGN KEY (user_id) REFERENCES users(id),
+    	FOREIGN KEY (league_id) REFERENCES leagues(id),
+    	FOREIGN KEY (player_id) REFERENCES players(id)
+);

@@ -39,6 +39,10 @@ function requestProcessor($request){
             		return postMessage($request['user_id'], $request['league_id'], $request['message']);
         	case "get_messages":
             		return getMessages($request['league_id']);
+            	case "get_unselected_players":
+    			return getUnselectedPlayers($request['league_id'], $request['filters']);
+    		case "draft_player":
+    			return draftPlayer($request['user_id'], $request['league_id'], $request['player_id'], $request['status']);
   	}
 	return array("returnCode" => '0', 'message'=>"Database Server received request and processed");
 }

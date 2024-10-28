@@ -333,10 +333,95 @@ function getMessages($leagueId) {
     	return array("success" => true, "messages" => $messages);
 }
 
+// League Players Related Functions
+function draftPlayer($userId, $leagueId, $playerId, $status) {
+    	$db = dbConnect();
+
+    	// Verify if the player is already drafted in the league
+    	$stmt = $db->prepare("SELECT * FROM user_draft WHERE league_id = ? AND player_id = ?");
+   	$stmt->bind_param("ii", $leagueId, $playerId);
+    	$stmt->execute();
+    	if ($stmt->get_result()->num_rows > 0) {
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => false, "message" => "Player already drafted in this league.");
+    	}
+
+    	// Check the user's current draft count for the specified position and status
+    	$stmt = $db->prepare("SELECT COUNT(*) AS count FROM user_draft 
+                          	JOIN players ON user_draft.player_id = players.id 
+                          	WHERE user_draft.user_id = ? AND user_draft.league_id = ? 
+                          	AND players.position = ? AND user_draft.status = ?");
+    	$position = ($status === 'active') ? 'Attacker' : 'Midfielder';
+    	$stmt->bind_param("iiss", $userId, $leagueId, $position, $status);
+    	$stmt->execute();
+    	$countResult = $stmt->get_result()->fetch_assoc();
+    	$draftCount = $countResult['count'] ?? 0;
+
+    	// Validate draft limits
+    	$maxDraft = ($status === 'active') ? 4 : 2;
+    	if ($draftCount >= $maxDraft) {
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => false, "message" => "Max $status players drafted for this position.");
+    	}
+
+    	// Proceed with drafting the player
+    	$stmt = $db->prepare("INSERT INTO user_draft (user_id, league_id, player_id, position, status) VALUES (?, ?, ?, ?, ?)");
+    	$stmt->bind_param("iiiss", $userId, $leagueId, $playerId, $position, $status);
+    	$stmt->execute();
+
+    	if ($stmt->affected_rows > 0) {
+        	$stmt->close();
+        	$db->close();
+        	return array("success" => true, "message" => "Player drafted successfully as $status.");
+    	} else {
+    		$stmt->close();
+        	$db->close();
+        	return array("success" => false, "message" => "Failed to draft player.");
+    	}
+}
+
+function getUnselectedPlayers($leagueId, $filters = []) {
+    	$db = dbConnect();
+
+    	// Start building the query
+    	$query = "SELECT players.id, players.name, players.position, players.nationality, players.team 
+              	FROM players 
+              	LEFT JOIN user_draft ON players.id = user_draft.player_id AND user_draft.league_id = ?
+              	WHERE user_draft.player_id IS NULL";
+
+    	// Apply filters
+    	$params = [$leagueId];
+    	if (!empty($filters['name'])) {
+        	$query .= " AND players.name LIKE ?";
+        	$params[] = "%" . $filters['name'] . "%";
+    	}
+    	if (!empty($filters['country'])) {
+        	$query .= " AND players.nationality = ?";
+        	$params[] = $filters['country'];
+    	}
+    	if (!empty($filters['position'])) {
+        	$query .= " AND players.position = ?";
+        	$params[] = $filters['position'];
+    	}
+    	if (!empty($filters['team'])) {
+        	$query .= " AND players.team = ?";
+        	$params[] = $filters['team'];
+    	}
+
+    	$stmt = $db->prepare($query);
+    	$stmt->execute($params);
+    	$result = $stmt->get_result();
+    	$players = $result->fetch_all(MYSQLI_ASSOC);
+    	$stmt->close();
+    	$db->close();
+    	return array("success" => true, "players" => $players);
+}
+
 // API-Related Functions
 
 // This function would populate the database with the players
-// Would only need to be run once but include checks to prevent multiple instances of players, SIMPLIFY POSITIONS! Convert all Midfielders (center, left, etc) into Midfielders and all Forwards (wingers, center, offence) into Forwards BEFORE inserting into database, for simplicity sake down the line
 function addPlayersIntoDatabase(){
 	$requestPlayers = array();
 	$requestPlayers['type'] = 'get_league_players';
