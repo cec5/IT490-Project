@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_league'])) {
 
         <!-- Form to post a message -->
         <h5>Post a Message</h5>
-        <form action="league.php?id=<?php echo $leagueId; ?>" method="POST">
+        <form action="league.php?league_id=<?php echo $leagueId; ?>" method="POST">
             <div class="mb-3">
                 <textarea class="form-control" name="message" rows="3" required></textarea>
             </div>
@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_league'])) {
         <hr>
 
         <!-- Red button to leave the league -->
-        <form action="league.php?id=<?php echo $leagueId; ?>" method="POST">
+        <form action="league.php?league_id=<?php echo $leagueId; ?>" method="POST">
             <input type="hidden" name="leave_league" value="1">
             <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to leave this league?');">Leave League</button>
         </form>
