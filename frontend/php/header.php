@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT490-Project</title>
+    <title>Soccer Fantasy League Project</title>
     <!-- Bootstrap CSS -->
     <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
 </head>
@@ -11,7 +11,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="index.php">IT490-Project</a>
+            <a class="navbar-brand" href="index.php">Soccer Fantasy League Project</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -26,7 +26,7 @@
                     <!-- League Links Dropdown - only appears on league-specific pages -->
                     <?php 
                     // Check if we're on a league-specific page
-                    $isLeaguePage = in_array(basename($_SERVER['PHP_SELF']), ['league.php', 'draft.php', 'myroster.php', 'rosters.php']);
+                    $isLeaguePage = in_array(basename($_SERVER['PHP_SELF']), ['league.php', 'draft.php', 'myroster.php', 'trades.php']);
                     if ($isLeaguePage && isset($_GET['league_id'])):
                         $leagueId = intval($_GET['league_id']);
                     ?>
@@ -37,7 +37,7 @@
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                                 <li><a class="dropdown-item" href="draft.php?league_id=<?php echo $leagueId; ?>">Draft Players</a></li>
                                 <li><a class="dropdown-item" href="myroster.php?league_id=<?php echo $leagueId; ?>">My Roster</a></li>
-                                <li><a class="dropdown-item" href="rosters.php?league_id=<?php echo $leagueId; ?>">All Rosters</a></li>
+                                <li><a class="dropdown-item" href="trades.php?league_id=<?php echo $leagueId; ?>">Trades</a></li>
                             </ul>
                         </li>
                     <?php endif; ?>
