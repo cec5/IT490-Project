@@ -4,6 +4,11 @@ include 'validation.php';
 include 'leagueValidation.php';
 require_once 'client_rmq_db.php';
 
+// update the leaderboard before fetch
+require '../../database/php/databaseFunctions.php';
+$leagueId = $_GET['league_id'];
+updateUserPoints($leagueId);
+
 // Fetch the leaderboard
 $request = array();
 $request['type'] = 'get_leaderboard';

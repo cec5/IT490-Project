@@ -926,5 +926,46 @@ function addPlayersIntoDatabase(){
     	}
 	$stmt->close();
 	$db->close();
-}	
+}
+
+// update user points
+function updateUserPoints($leagueId) {
+    $db = dbConnect();
+
+    // get all users in the league
+    $stmt = $db->prepare("SELECT user_id FROM user_league WHERE league_id = ?");
+    $stmt->bind_param("i", $leagueId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    // through each user
+    while ($row = $result->fetch_assoc()) {
+        $userId = $row['user_id'];
+
+        // count players in respective roster (for testing)
+        $stmtPlayers = $db->prepare("
+            SELECT COUNT(*) AS player_count 
+            FROM user_draft 
+            WHERE user_id = ? AND league_id = ?
+        ");
+        $stmtPlayers->bind_param("ii", $userId, $leagueId);
+        $stmtPlayers->execute();
+        $playerCount = $stmtPlayers->get_result()->fetch_assoc()['player_count'];
+
+        // update the user's points
+        $stmtUpdate = $db->prepare("
+            UPDATE user_league 
+            SET points = ? 
+            WHERE user_id = ? AND league_id = ?
+        ");
+        $stmtUpdate->bind_param("iii", $playerCount, $userId, $leagueId);
+        $stmtUpdate->execute();
+
+        $stmtPlayers->close();
+        $stmtUpdate->close();
+    }
+
+    $stmt->close();
+    $db->close();
+}
 ?>
