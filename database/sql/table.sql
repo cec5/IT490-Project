@@ -67,3 +67,20 @@ CREATE TABLE user_draft (
     	FOREIGN KEY (league_id) REFERENCES leagues(id),
     	FOREIGN KEY (player_id) REFERENCES players(id)
 );
+
+CREATE TABLE trades (
+    	id INT AUTO_INCREMENT PRIMARY KEY,
+    	proposing_user_id INT NOT NULL,
+    	receiving_user_id INT NOT NULL,
+    	league_id INT NOT NULL,
+    	proposed_player_id INT NOT NULL,
+    	requested_player_id INT NOT NULL,
+    	status ENUM('pending', 'accepted', 'declined', 'withdrawn') DEFAULT 'pending',
+    	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    	FOREIGN KEY (proposing_user_id) REFERENCES users(id),
+    	FOREIGN KEY (receiving_user_id) REFERENCES users(id),
+    	FOREIGN KEY (league_id) REFERENCES leagues(id),
+    	FOREIGN KEY (proposed_player_id) REFERENCES players(id),
+    	FOREIGN KEY (requested_player_id) REFERENCES players(id)
+);
+

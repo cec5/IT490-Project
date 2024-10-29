@@ -2,8 +2,8 @@
 <body>
     <!-- Content Section -->
     <div class="container mt-5">
-        <h1>Welcome to IT490-Project's Homepage</h1>
-        <p>This is a simple homepage created using Bootstrap 5.3.3 and PHP.</p>
+        <h1>Soccer Fantasy League</h1>
+        <p>This is a simple soccer fantasy webapp, users can create a league, join a league, draft players, manage rosters, and initiate trades with other players</p>
     </div>
 
     <!-- Bootstrap JS -->
