@@ -928,40 +928,87 @@ function addPlayersIntoDatabase(){
 	$db->close();
 }
 
+require_once '../../dmz/php/dmzFunctions.php';
+
 // update user points
 function updateUserPoints($leagueId) {
     $db = dbConnect();
+    $apiToken = 'bb004732d9244d4a958ce2496f02914f';
+    $matchday = '9';
 
-    // get all users in the league
+    // through all users in league
     $stmt = $db->prepare("SELECT user_id FROM user_league WHERE league_id = ?");
     $stmt->bind_param("i", $leagueId);
     $stmt->execute();
     $result = $stmt->get_result();
 
-    // through each user
+    // match results for matchday
+    $matchesData = matchResults($matchday, $apiToken);
+
+    if (!isset($matchesData['matches']) || empty($matchesData['matches'])) {
+        echo "No matches found for the specified matchday.\n";
+        return;
+    }
+
+    // through all users
     while ($row = $result->fetch_assoc()) {
         $userId = $row['user_id'];
+        $userPoints = 0;
 
-        // count players in respective roster (for testing)
-        $stmtPlayers = $db->prepare("
-            SELECT COUNT(*) AS player_count 
-            FROM user_draft 
-            WHERE user_id = ? AND league_id = ?
-        ");
-        $stmtPlayers->bind_param("ii", $userId, $leagueId);
-        $stmtPlayers->execute();
-        $playerCount = $stmtPlayers->get_result()->fetch_assoc()['player_count'];
+        // get rosters of users
+        $stmtRoster = $db->prepare("SELECT player_id FROM user_draft WHERE user_id = ? AND league_id = ?");
+        $stmtRoster->bind_param("ii", $userId, $leagueId);
+        $stmtRoster->execute();
+        $rosterResult = $stmtRoster->get_result();
 
-        // update the user's points
-        $stmtUpdate = $db->prepare("
-            UPDATE user_league 
-            SET points = ? 
-            WHERE user_id = ? AND league_id = ?
-        ");
-        $stmtUpdate->bind_param("iii", $playerCount, $userId, $leagueId);
+        while ($rowRoster = $rosterResult->fetch_assoc()) {
+            $playerId = $rowRoster['player_id'];
+
+            // get team from player id
+            $stmtPlayer = $db->prepare("SELECT team FROM players WHERE id = ?");
+            $stmtPlayer->bind_param("i", $playerId);
+            $stmtPlayer->execute();
+            $playerResult = $stmtPlayer->get_result();
+
+            if ($playerRow = $playerResult->fetch_assoc()) {
+                $playerTeam = $playerRow['team'];
+                
+                // calculate points match outcomes
+                foreach ($matchesData['matches'] as $match) {
+                    $homeTeam = $match['homeTeam']['name'];
+                    $awayTeam = $match['awayTeam']['name'];
+                    $homeScore = $match['score']['fullTime']['home'];
+                    $awayScore = $match['score']['fullTime']['away'];
+
+                    // verify if player's team played in match
+                    if ($playerTeam == $homeTeam || $playerTeam == $awayTeam) {
+                        $isHomeTeam = $playerTeam == $homeTeam;
+                        $teamScore = $isHomeTeam ? $homeScore : $awayScore;
+                        $opponentScore = $isHomeTeam ? $awayScore : $homeScore;
+
+                        // +2 per goal scored // -1 per goal conceded
+                        $userPoints += $teamScore * 2;
+                        $userPoints -= $opponentScore;
+
+                        // +2 per win // +1 per draw // nothing for loss
+                        if ($teamScore > $opponentScore) {
+                            $userPoints += 2; // Win
+                        } elseif ($teamScore == $opponentScore) {
+                            $userPoints += 1; // Draw
+                        }
+                    }
+                }
+            }
+
+            $stmtPlayer->close();
+        }
+
+        // update user's points in table user_league
+        $stmtUpdate = $db->prepare("UPDATE user_league SET points = ? WHERE user_id = ? AND league_id = ?");
+        $stmtUpdate->bind_param("iii", $userPoints, $userId, $leagueId);
         $stmtUpdate->execute();
 
-        $stmtPlayers->close();
+        $stmtRoster->close();
         $stmtUpdate->close();
     }
 
