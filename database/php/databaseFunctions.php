@@ -931,10 +931,9 @@ function addPlayersIntoDatabase(){
 require_once '../../dmz/php/dmzFunctions.php';
 
 // update user points
-function updateUserPoints($leagueId) {
+function updateUserPoints($leagueId, $matchday) {
     $db = dbConnect();
     $apiToken = 'bb004732d9244d4a958ce2496f02914f';
-    $matchday = '9';
 
     // through all users in league
     $stmt = $db->prepare("SELECT user_id FROM user_league WHERE league_id = ?");

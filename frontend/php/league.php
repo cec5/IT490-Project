@@ -7,7 +7,8 @@ require_once 'client_rmq_db.php';
 // update the leaderboard before fetch
 require '../../database/php/databaseFunctions.php';
 $leagueId = $_GET['league_id'];
-updateUserPoints($leagueId);
+$matchday = $_GET['matchday'];
+updateUserPoints($leagueId, $matchday);
 
 // Fetch the leaderboard
 $request = array();
@@ -27,7 +28,7 @@ $messages = $messagesResponse['messages'];
 
 // Handle message posting
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
-    	$messageContent = trim($_POST['message']);
+	$messageContent = trim($_POST['message']);
 
     	if (!empty($messageContent)) {
         	// Send request to post the message
@@ -101,6 +102,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_league'])) {
         <?php else: ?>
             <p>No points available yet for this league.</p>
         <?php endif; ?>
+
+        <!-- Dropdown to select matchday -->
+        <form method="GET" action="league.php" class="mb-4" id="matchdayForm">
+            <input type="hidden" name="league_id" value="<?php echo htmlspecialchars($leagueId); ?>">
+            <div class="mb-3" style="display: flex; align-items: center;I">
+                <label for="matchday" style="margin-right: 10px;">Select Matchday:</label>
+		<select name="matchday" id="matchday" class="form-control" style ="width: auto;" onchange="document.getElementById('matchdayForm').submit();">
+		<option value="" disabled selected style="display:none;">All Matches</option>
+                    <?php
+                        $selectedMatchday = isset($_GET['matchday']) ? (int)$_GET['matchday'] : null;
+// Adjust this range based on the actual matchdays available
+                    for ($i = 1; $i <= 38; $i++) { // Assuming a total of 38 matchdays
+                        $selected = ($i === $selectedMatchday) ? 'selected' : '';
+                        echo "<option value=\"$i\"$selected>Matchday $i</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+        </form>
 
         <hr>
 
