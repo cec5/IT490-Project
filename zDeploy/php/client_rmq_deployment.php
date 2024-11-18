@@ -3,16 +3,18 @@ require_once('../rabbitmq_files/path.inc');
 require_once('../rabbitmq_files/get_host_info.inc');
 require_once('../rabbitmq_files/rabbitMQLib.inc');
 
-// Creates a client instance that would be received only by the Deployment Server's Listener, I guess it would primarily be used by dev vm's to start the process of sending over files
+// Creates a client instance that would be received only by the Deployment Server's Listener
+// Use for direct communication with the deployment, usually by DEV to deployment, but also for updating version status from QA or PROD 
 
-function createRabbitMQClientDeployment($request, $routingKey = "deploy") {
+function createRabbitMQClientDeployment($request) {
     	$client = new rabbitMQClient("../rabbitmq_files/rabbitMQ_deploy.ini", "testServer");
 
-    	$request['routing_key'] = $routingKey;
-
-    	if (!isset($request['message'])) {
-        	$request['message'] = "Default message for deployment-bound client";
-    	}
+	if (isset($argv[1])){
+	       	$msg = $argv[1];
+	}
+	else{
+		$msg = "default message for deployment server-bound client";
+	}
 
     	$response = $client->send_request($request);
 
