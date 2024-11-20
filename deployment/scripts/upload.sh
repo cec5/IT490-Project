@@ -4,7 +4,7 @@
 current_folder=$(basename "$PWD")
 
 # Define valid folder names
-valid_folders=("backend" "dmz" "frontend")
+valid_folders=("backend" "dmz" "frontend" "zDeploy" "deployment")
 
 # Check if the current folder name is valid
 if [[ ! " ${valid_folders[@]} " =~ " ${current_folder} " ]]; then
