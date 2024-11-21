@@ -4,7 +4,7 @@ DEPLOY_USER="luke"
 FRONTEND_PATH="../../frontend"           
 BACKEND_PATH="../../backend"   
 DMZ_PATH="../../dmz"   
-DEPLOY_PATH="/home/luke/tomTest" 
+DEPLOY_PATH="/home/luke/git/IT490-Project/zDeploy/bundles" 
 TEST_PATH="test"
 PACKAGE_NAME="code_package_$(date +%Y%m%d_%H%M%S).tar.gz"
 #Function to check the success of a command
