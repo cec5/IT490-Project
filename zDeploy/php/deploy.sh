@@ -1,3 +1,4 @@
+#!/bin/bash
 DEPLOY_SERVER="172.23.193.68"
 DEPLOY_USER="luke"                 
 FRONTEND_PATH="../../frontend"           
