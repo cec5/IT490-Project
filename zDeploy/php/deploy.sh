@@ -16,9 +16,9 @@ check_success() {
 }
 
 #Bundle the code into a tar.gz package. Testing with only frontend first.
-echo "Bundling code from $FRONTEND_PATH into $PACKAGE_NAME..."
-tar -czf $PACKAGE_NAME -C "$FRONTEND_PATH" .
-check_success "Failed to create package."   
+#echo "Bundling code from $FRONTEND_PATH into $PACKAGE_NAME..."
+#tar -czf $PACKAGE_NAME -C "$FRONTEND_PATH" .
+#check_success "Failed to create package."   
 
 #SCP the package to the deployment server
 echo "Transferring package to $DEPLOY_SERVER:$DEPLOY_PATH..."
