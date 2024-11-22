@@ -18,6 +18,7 @@ function requestProcessor($request) {
             	// Have a case that is dedicated to pass/fail
 			case "doFanout":
 				// YERRRRR
+				$ret = doFanout("qa");
 				return "Fanout request received" . PHP_EOL;
 			case "fileUpload":
 				// do the thing

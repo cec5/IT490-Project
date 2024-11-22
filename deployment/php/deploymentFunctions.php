@@ -89,4 +89,21 @@ function writeFileToDB($requestObj) {
 	}
 }
 
+function doFanout($toWho, $sendObj) {
+    switch ($toWho) {
+        case "prod":
+            require_once("client_rmq_prod.php");
+            //
+            $ret = sendToProdCluster($sendObj);
+            return $ret;
+        case "qa":
+            require_once("client_rmq_qa.php");
+            //
+            $ret = sendToQaCluster($sendObj);
+            return $ret;
+        default:
+            return;
+    }
+}
+
 ?>
