@@ -17,13 +17,31 @@ function requestProcessor($request) {
             	// Other cases would involve storing zipped files (sent from DEV), then adding an entry to the database
             	// Have a case that is dedicated to pass/fail
 			case "doFanout":
-				// YERRRRR
-				$ret = doFanout("qa");
-				return "Fanout request received" . PHP_EOL;
+				if (!isset($request['target'])) {
+					return "Missing deploy target group\n";
+				}
+				if (($request['target'] != 'qa') && ($request['target'] != 'prod')) {
+					return "Invalid deploy target group\n";
+				}
+				//
+				$latestStableVersion = getLatestStableVersion();
+				echo var_dump($latestStableVersion);
+				if ($latestStableVersion != null) {
+					$sendOff = array(
+						'type' => 'deploy_package',
+						'FilePath' => $latestStableVersion['FilePath'],
+						'DeploymentIp' => '172.23.193.68',
+					);
+					echo var_dump($sendOff);
+					$ret = doFanout($request['target'], $sendOff);
+					// $ret = doFanout("prod", $sendOff);
+				} else {
+					return "Unable to locate or missing latest stable version in database\n";
+				}
+				return "Fanout request received\n" . PHP_EOL;
 			case "fileUpload":
-				// do the thing
 				$ret = writeFileToDB($request);
-				return "File upload msg receieved\n" . $ret . PHP_EOL;
+				return "File upload msg receieved" . $ret . PHP_EOL;
     	}
     	return array("returnCode" => '0', 'message' => "Deployment Server received request and processed");
 }

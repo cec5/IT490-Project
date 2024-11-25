@@ -3,6 +3,8 @@ require_once('../rabbitmq_files/path.inc');
 require_once('../rabbitmq_files/get_host_info.inc');
 require_once('../rabbitmq_files/rabbitMQLibFanout.inc');
 
+require_once('clusterFunctions.php');
+
 function requestProcessor($request) {
     	echo "Received request:" . PHP_EOL;
     	var_dump($request);
@@ -13,9 +15,11 @@ function requestProcessor($request) {
 
    	switch ($request['type']) {
         	case "test":
-            		return "Test message received by prod cluster listener.";
+				return "Test message received by prod cluster listener.";
         	case "deploy_package":
-            		// Simulate deployment processing, write and call a seperate function that would get the files from deployment and overwrite/replace the current ones
+				// Simulate deployment processing, write and call a seperate function that would get the files from deployment and overwrite/replace the current ones
+				$success = getDeploymentFromRequest($request);
+				return $success;
     	}
 }
 

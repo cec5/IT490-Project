@@ -11,7 +11,8 @@ $versionPath = getVersionPath('frontend');
 // echo "WARNING: Uploading to the following directory. Probably won't work, make sure 'deployer' or their group has access to the directory, or change the target directory in simulatePush.php!\n";
 // $fullPath = '/opt/store/' . $versionPath . 'example.tar.gz';
 
-$fullPath = '/opt/store/' . $versionPath . getFormattedDateTime() . '.tar.gz';
+$fileName = 'code_package_' . getFormattedDateTime() . '.tar.gz';
+$fullPath = '/opt/store/' . $versionPath . $fileName;
 echo "Xferring to " . $fullPath . "\n";
 $xferSuccess = sendFile($connection, '../example.tar.gz', $fullPath);
 
@@ -22,7 +23,20 @@ $request = array();
 $request['type'] = 'fileUpload';
 $request['filePath'] = $fullPath;
 $request['bundleName'] = generateRandomName();
+$request['fileName'] = $fileName;
 $request['status'] = 'NEW';
+
+echo var_dump($request);
+
+$returnedResponse = sendToDeployment($request);
+echo $returnedResponse;
+
+// wait?
+
+$request = array();
+$request['type'] = 'doFanout';
+// $request['target'] = 'qa';
+$request['target'] = 'prod';
 
 echo var_dump($request);
 

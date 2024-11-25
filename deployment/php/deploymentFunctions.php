@@ -106,4 +106,38 @@ function doFanout($toWho, $sendObj) {
     }
 }
 
+function getLatestStableVersion() {
+    $mydb = new mysqli('localhost', 'testUser', '12345', 'testdb');
+    
+    if ($mydb->connect_error) {
+        die("Connection failed: " . $mydb->connect_error);
+    }
+
+    try {
+        // First, try to find the newest version with TestStatus 'PASS'
+        $queryPass = "SELECT * FROM versionHistory WHERE TestStatus = 'PASS' ORDER BY VersionId DESC LIMIT 1";
+        $resultPass = $mydb->query($queryPass);
+        
+        if ($resultPass && $resultPass->num_rows > 0) {
+            $latestStableVersion = $resultPass->fetch_assoc();
+        } else {
+            // If no 'PASS' versions exist, find the newest version with TestStatus 'NEW'
+            $queryNew = "SELECT * FROM versionHistory WHERE TestStatus = 'NEW' ORDER BY VersionId DESC LIMIT 1";
+            $resultNew = $mydb->query($queryNew);
+            
+            if ($resultNew && $resultNew->num_rows > 0) {
+                $latestStableVersion = $resultNew->fetch_assoc();
+            } else {
+                // If no suitable version is found, set $latestStableVersion to null
+                $latestStableVersion = null;
+            }
+        }
+        return $latestStableVersion;
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage();
+    } finally {
+        $mydb->close();
+    }
+}
+
 ?>

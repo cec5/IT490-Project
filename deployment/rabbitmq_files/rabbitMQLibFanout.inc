@@ -2,7 +2,7 @@
 
 require_once('get_host_info.inc');
 
-class rabbitMQServer {
+class rabbitMQFanoutServer {
     	private $machine = "";
     	public $BROKER_HOST;
     	private $BROKER_PORT;
@@ -100,7 +100,7 @@ class rabbitMQServer {
     	}
 }
 
-class rabbitMQClient {
+class rabbitMQFanoutClient {
     	private $machine = "";
     	public $BROKER_HOST;
     	private $BROKER_PORT;
