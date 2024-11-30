@@ -2,10 +2,13 @@
 require_once('../rabbitmq_files/path.inc');
 require_once('../rabbitmq_files/get_host_info.inc');
 require_once('../rabbitmq_files/rabbitMQLib.inc');
+require_once('client_rmq_log.php');
 require_once('databaseFunctions.php');
 
 function requestProcessor($request){
 	echo "received request".PHP_EOL;
+	// Log the request locally and to other servers
+    	logToFile("Received request: " . json_encode($request));
 	var_dump($request);
 	if(!isset($request['type'])){
 		return "ERROR: unsupported message type";
@@ -66,7 +69,26 @@ function requestProcessor($request){
     		case "get_other_reserve_players":
    			return getOtherReservePlayers($request['user_id'], $request['league_id']);
   	}
+  	// Log the response locally
+    	logToFile("Response: " . json_encode($response));
 	return array("returnCode" => '0', 'message'=>"Database Server received request and processed");
+}
+
+// Function to store logging info locally
+function logToFile($message) {
+    	$logFile = '../logging/backend.log';
+    	$timestamp = date('Y-m-d H:i:s');
+    	file_put_contents($logFile, "[$timestamp] $message" . PHP_EOL, FILE_APPEND);
+    	distributeLogs($message, $timestamp);
+}
+
+function distributeLogs($message, $timestamp) {
+    	$logRequest = array();
+    	$logRequest['type'] = 'backend';
+    	$logRequest['message'] = $message;
+    	$logRequest['source'] = 'backend';
+    	$logRequest['timestamp'] = $timestamp;
+    	createRabbitMQClientLogFanout($logRequest);
 }
 
 $server = new rabbitMQServer("../rabbitmq_files/rabbitMQ_db.ini","testServer");
