@@ -140,4 +140,125 @@ function getLatestStableVersion() {
     }
 }
 
+function getLatestNewVersion($input) {
+    $mydb = new mysqli('localhost', 'testUser', '12345', 'testdb');
+    
+    if ($mydb->connect_error) {
+        die("Connection failed: " . $mydb->connect_error);
+    }
+
+    try {
+        // Check if $input has a 'version' property
+        if ($isset($input['version'])) {
+            $version = $input['version'];
+
+            // Search for the entry with a matching BundleName
+            $queryVersion = "SELECT * FROM versionHistory WHERE BundleName = ?";
+            $stmt = $mydb->prepare($queryVersion);
+            $stmt->bind_param("s", $version);
+            $stmt->execute();
+            $resultVersion = $stmt->get_result();
+
+            if ($resultVersion && $resultVersion->num_rows > 0) {
+                return $resultVersion->fetch_assoc();
+            } else {
+                return null; // No matching entry found
+            }
+        }
+
+        // If no specific version is requested, find the latest 'PASS' or 'NEW' version
+        $queryPass = "SELECT * FROM versionHistory WHERE TestStatus = 'PASS' ORDER BY VersionId DESC LIMIT 1";
+        $resultPass = $mydb->query($queryPass);
+
+        if ($resultPass && $resultPass->num_rows > 0) {
+            $latestStableVersion = $resultPass->fetch_assoc();
+        } else {
+            $queryNew = "SELECT * FROM versionHistory WHERE TestStatus = 'NEW' ORDER BY VersionId DESC LIMIT 1";
+            $resultNew = $mydb->query($queryNew);
+
+            if ($resultNew && $resultNew->num_rows > 0) {
+                $latestStableVersion = $resultNew->fetch_assoc();
+            } else {
+                $latestStableVersion = null; // No suitable version found
+            }
+        }
+        return $latestStableVersion;
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage();
+        return null;
+    } finally {
+        $mydb->close();
+    }
+}
+
+
+function approveBuild($input) {
+    $mydb = new mysqli('localhost', 'testUser', '12345', 'testdb');
+    
+    if ($mydb->connect_error) {
+        die("Connection failed: " . $mydb->connect_error);
+    }
+
+    $build = $input['build'];
+    $status = $input['status'];
+
+    if (!in_array($status, ['PASS', 'FAIL', 'NEW'])) {
+        echo "Error: Invalid status provided.\n";
+        return false;
+    }
+
+    try {
+        if ($build === "latest") {
+            // Find the newest VersionId and update its TestStatus
+            $query = "SELECT VersionId FROM versionHistory ORDER BY VersionId DESC LIMIT 1";
+            $result = $mydb->query($query);
+
+            if ($result && $result->num_rows > 0) {
+                $row = $result->fetch_assoc();
+                $versionId = $row['VersionId'];
+
+                $updateQuery = "UPDATE versionHistory SET TestStatus = '$status' WHERE VersionId = $versionId";
+                if ($mydb->query($updateQuery)) {
+                    return true;
+                } else {
+                    echo "Error updating status: " . $mydb->error . "\n";
+                    return false;
+                }
+            } else {
+                echo "Error: No records found.\n";
+                return false;
+            }
+        } else {
+            // Search for a build by BundleName
+            $query = "SELECT VersionId FROM versionHistory WHERE BundleName = ?";
+            $stmt = $mydb->prepare($query);
+            $stmt->bind_param("s", $build);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result && $result->num_rows > 0) {
+                $row = $result->fetch_assoc();
+                $versionId = $row['VersionId'];
+
+                $updateQuery = "UPDATE versionHistory SET TestStatus = '$status' WHERE VersionId = $versionId";
+                if ($mydb->query($updateQuery)) {
+                    return true;
+                } else {
+                    echo "Error updating status: " . $mydb->error . "\n";
+                    return false;
+                }
+            } else {
+                return false; // No matching build found!
+            }
+        }
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage() . "\n";
+        return false;
+    } finally {
+        $mydb->close();
+    }
+}
+
+
+
 ?>

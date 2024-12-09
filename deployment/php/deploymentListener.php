@@ -24,7 +24,7 @@ function requestProcessor($request) {
 					return "Invalid deploy target group\n";
 				}
 				//
-				$latestStableVersion = getLatestStableVersion();
+				$latestStableVersion = getLatestStableVersion($request);
 				echo var_dump($latestStableVersion);
 				if ($latestStableVersion != null) {
 					$sendOff = array(
@@ -42,6 +42,9 @@ function requestProcessor($request) {
 			case "fileUpload":
 				$ret = writeFileToDB($request);
 				return "File upload msg receieved" . $ret . PHP_EOL;
+			case "approveBuild":
+				$ret = approveBuild($request);
+				return $ret ? "Build approved successfully." . PHP_EOL : "Failed to approve build.\n" . PHP_EOL;
     	}
     	return array("returnCode" => '0', 'message' => "Deployment Server received request and processed");
 }
