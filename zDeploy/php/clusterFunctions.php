@@ -105,6 +105,8 @@ function extractAndMoveTarFile($fileName) {
     $oldDir = "$repoRootDir" . "old";
     if (!is_dir($oldDir)) {
         mkdir($oldDir);  // Create the 'old' folder if it doesn't exist
+    } else {
+        system('rm -rf -- ' . escapeshellarg($oldDir), $retval);
     }
 
     // Get a list of directories in the repository root (excluding 'old' and the tar.gz file)
