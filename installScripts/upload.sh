@@ -8,7 +8,6 @@ folders=(
     "$parent_dir/backend"
     "$parent_dir/dmz"
     "$parent_dir/frontend"
-    "$parent_dir/zDeploy"
     "$parent_dir/deployment"
     "$parent_dir/installScripts"
 )
