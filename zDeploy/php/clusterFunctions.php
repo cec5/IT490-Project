@@ -34,11 +34,12 @@ function getFormattedDateTime() {
 }
 
 // Gets SSH Connection
-function createSSHConnection($hostname = 'localhost', $port = 22) {
+function createSSHConnection($hostname = '172.23.193.68', $port = 22) {
     $configIni = parse_ini_file("../config/source.ini");
     $deployUsername = $configIni["username"];
     $deployPassword = $configIni["password"];
 	$connection = ssh2_connect($hostname, $port);
+    var_dump($connection);
     if (ssh2_auth_password($connection, $deployUsername, $deployPassword)) {
         echo "Auth success\n";
     } else {
