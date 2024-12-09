@@ -2,7 +2,7 @@
 require_once('client_rmq_deploy.php');
 require_once('clusterFunctions.php');
 
-$connection = createSSHConnection();
+$connection = createSSHConnection('172.23.193.68', 22);
 
 $request = array();
 $request['type'] = 'doFanout';
