@@ -14,13 +14,13 @@ function requestProcessor($request) {
     	}
 
    	switch ($request['type']) {
-        	case "test":
-				return "Test message received by prod cluster listener.";
-        	case "deploy_package":
-				// Simulate deployment processing, write and call a seperate function that would get the files from deployment and overwrite/replace the current ones
-				$success = getDeploymentFromRequest($request);
-				return $success;
-    	}
+		case "test":
+			return "Test message received by prod cluster listener.";
+		case "deploy_package":
+			// Simulate deployment processing, write and call a seperate function that would get the files from deployment and overwrite/replace the current ones
+			$success = getDeploymentFromRequest($request);
+			return $success;
+	}
 }
 
 $server = new rabbitMQServer("../rabbitmq_files/rabbitMQ_PROD_Cluster.ini", "testServer");

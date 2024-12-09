@@ -6,6 +6,33 @@ $deployPassword = $configIni["password"];
 $deployDefaultHostname = $configIni["hostname"];
 $deployDefaultPort = $configIni["port"];
 
+function generateRandomName() {
+    // Lists of words
+    $adjectives = [
+        'fast', 'silly', 'happy', 'lazy', 'brave', 'gentle', 'kind', 'smart', 'witty', 'calm'
+    ];
+    $colors = [
+        'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'black', 'white', 'pink', 'brown'
+    ];
+    $animals = [
+        'cat', 'dog', 'fox', 'bear', 'tiger', 'lion', 'wolf', 'rabbit', 'eagle', 'panda'
+    ];
+
+    // Pick one word from each list randomly
+    $adjective = $adjectives[array_rand($adjectives)];
+    $color = $colors[array_rand($colors)];
+    $animal = $animals[array_rand($animals)];
+
+    // Combine the words with a separator (e.g., '-')
+    return "{$adjective}-{$color}-{$animal}";
+}
+
+function getFormattedDateTime() {
+    $currentDateTime = new DateTime();
+    $formattedDateTime = $currentDateTime->format('Ymd-His');
+    return $formattedDateTime;
+}
+
 // Gets SSH Connection
 function createSSHConnection($hostname = 'localhost', $port = 22) {
     $configIni = parse_ini_file("../config/source.ini");
