@@ -10,6 +10,7 @@ folders=(
     "$parent_dir/frontend"
     "$parent_dir/zDeploy"
     "$parent_dir/deployment"
+    "$parent_dir/installScripts"
 )
 
 # Define the output archive location

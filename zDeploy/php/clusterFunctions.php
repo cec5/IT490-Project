@@ -73,10 +73,65 @@ function getDeploymentFromRequest($requestObj) {
         // TODO: run deploy.sh on the newly deployed code_package
         // $filename stores the name of the file, but $localFilePath stores its relative path to this file
         // dew it
+        extractAndMoveTarFile($fileName);
         return true;
     } else {
         return NULL;
     }
 }
+
+function extractAndMoveTarFile($fileName) {
+    // Define the paths
+    $repoRootDir = '../../';  // Path to the repository root (adjust if needed)
+    $filePath = "/zDeploy/bundles/$fileName";  // Path to the tar.gz file
+    $newFilePath = "$repoRootDir/$fileName";  // Destination path in the repo root
+
+    $preFilePath = '../bundles/'.$fileName;
+
+    // Check if the tar.gz file exists
+    if (!file_exists($preFilePath)) {
+        echo "Error: $fileName does not exist.\n";
+        return false;
+    }
+
+    // Step 1: Move the .tar.gz file to the repository's root directory
+    if (!rename($preFilePath, '../../' . $fileName)) {
+        echo "Error: Failed to move $fileName to the repository root.\n";
+        return false;
+    }
+
+    // Step 2: Move all current directories in the root folder to an 'old' folder
+    $oldDir = "$repoRootDir" . "old";
+    if (!is_dir($oldDir)) {
+        mkdir($oldDir);  // Create the 'old' folder if it doesn't exist
+    }
+
+    // Get a list of directories in the repository root (excluding 'old' and the tar.gz file)
+    $directories = glob("$repoRootDir/*", GLOB_ONLYDIR);
+    foreach ($directories as $dir) {
+        // Avoid moving 'old' and the tar.gz file itself
+        if (basename($dir) !== 'old' && basename($dir) !== $fileName && basename($dir) !== 'zDeploy') {
+            $newDir = "$oldDir/" . basename($dir);
+            if (!rename($dir, $newDir)) {
+                echo "Error: Failed to move directory $dir to $oldDir.\n";
+                return false;
+            }
+        }
+    }
+
+    // Step 3: Unpack the tar.gz file into the repository root directory
+    $command = "tar -xzvf $newFilePath -C $repoRootDir";
+    exec($command, $output, $return_var);
+
+    // Check if extraction was successful
+    if ($return_var === 0) {
+        echo "Extraction of $fileName completed successfully.\n";
+        return true;
+    } else {
+        echo "Error: Extraction failed.\n";
+        return false;
+    }
+}
+
 
 ?>
