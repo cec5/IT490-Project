@@ -34,7 +34,7 @@ function getFormattedDateTime() {
 }
 
 // Gets SSH Connection
-function createSSHConnection($hostname = '172.23.193.68', $port = 22) {
+function createSSHConnection($hostname = '172.24.193.68', $port = 22) {
     $configIni = parse_ini_file("../config/source.ini");
     $deployUsername = $configIni["username"];
     $deployPassword = $configIni["password"];
