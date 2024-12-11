@@ -103,6 +103,7 @@ function extractAndMoveTarFile($fileName) {
 
     // Step 2: Move all current directories in the root folder to an 'old' folder
     $oldDir = "$repoRootDir" . "old";
+    shell_exec('rm -rf ' . $oldDir);
     if (!is_dir($oldDir)) {
         // system('rm -rf -- ' . escapeshellarg($oldDir), $retval);
         mkdir($oldDir);  // Create the 'old' folder if it doesn't exist
