@@ -106,6 +106,9 @@ function extractAndMoveTarFile($fileName) {
     if (!is_dir($oldDir)) {
         // system('rm -rf -- ' . escapeshellarg($oldDir), $retval);
         mkdir($oldDir);  // Create the 'old' folder if it doesn't exist
+    } else if (is_dir($oldDir)) {
+        // rmrf($oldDir);
+        shell_exec('rm -rf ' . $oldDir);
     }
 
     // Get a list of directories in the repository root (excluding 'old' and the tar.gz file)
@@ -134,6 +137,18 @@ function extractAndMoveTarFile($fileName) {
         return false;
     }
 }
+
+function rmrf($dir) {
+    foreach (glob($dir) as $file) {
+        if (is_dir($file)) { 
+            rmrf("$file/*");
+            rmdir($file);
+        } else {
+            unlink($file);
+        }
+    }
+}
+
 
 
 ?>
