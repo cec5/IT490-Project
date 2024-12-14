@@ -927,4 +927,51 @@ function addPlayersIntoDatabase(){
 	$stmt->close();
 	$db->close();
 }	
+
+
+// SMS/PROFILE FUNCTIONS
+function getUserProfile($userId) {
+    $conn = dbConnect();
+    $stmt = $conn->prepare("SELECT email, phoneNum FROM users WHERE id = ?");
+    if (!$stmt) {
+        return array("success" => false, "message" => "Failed to prepare statement.");
+    }
+
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+    $stmt->close();
+    $conn->close();
+
+    if (empty($user)) {
+        return array("success" => false, "message" => "User not found.");
+    }
+
+    return array("success" => true, "user" => $user);
+}
+
+function updatePhoneNumber($userId, $phoneNum) {
+    $conn = dbConnect();
+    $stmt = $conn->prepare("UPDATE users SET phoneNum = ? WHERE id = ?");
+    if (!$stmt) {
+        return array("success" => false, "message" => "Failed to prepare statement.");
+    }
+
+    $stmt->bind_param("si", $phoneNum, $userId);
+    $stmt->execute();
+
+    // Check if a row was affected
+    if ($stmt->affected_rows > 0) {
+        $stmt->close();
+        $conn->close();
+        return array("success" => true, "message" => "Phone number updated successfully.");
+    } else {
+        $stmt->close();
+        $conn->close();
+        return array("success" => false, "message" => "No changes made. User not found or phone number unchanged.");
+    }
+}
+
+
 ?>

@@ -65,7 +65,11 @@ function requestProcessor($request){
     			return getLeagueMembers($request['league_id'], $request['user_id'] ?? null);
     		case "get_other_reserve_players":
    			return getOtherReservePlayers($request['user_id'], $request['league_id']);
-  	}
+	        case "get_user_profile":
+			return getUserProfile($request['user_id']);
+		case "update_phone_number":
+			return updatePhoneNumber($request['user_id'], $request['phoneNum']);
+	}
 	return array("returnCode" => '0', 'message'=>"Database Server received request and processed");
 }
 
