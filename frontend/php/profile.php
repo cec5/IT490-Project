@@ -12,44 +12,60 @@ $response = createRabbitMQClientDatabase($request);
 
 if ($response['success']) {
     $email = htmlspecialchars($response['user']['email']); // get user email
-    $phoneNum = htmlspecialchars($response['user']['phoneNum'] ?? ''); // get user phone num if exists
+    $is2FAEnabled = $response['user']['2fa']; // 0 if disabled, 1 enabled
+    $code = htmlspecialchars($response['user']['code'] ?? ''); // 4 digit random
 } else {
     $error_message = htmlspecialchars($response['message']);
 }
 
-// form for updating empty phone number
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['phoneNum'])) {
-    $newPhoneNum = $_POST['phoneNum'];
-
-    $request = array();
-    $request['type'] = 'update_phone_number';
-    $request['user_id'] = $userId;
-    $request['phoneNum'] = $newPhoneNum;
-
-    $updateResponse = createRabbitMQClientDatabase($request);
-
-    if ($updateResponse['success']) {
-        $success_message = "Phone number updated successfully.";
-        $phoneNum = htmlspecialchars($newPhoneNum);
-    } else {
-        $error_message = htmlspecialchars($updateResponse['message']);
-    }
-} elseif (isset($_POST['remove_phone']) && $_POST['remove_phone'] === 'true') {
-        // form to remove the phone number (set to NULL)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // enable button
+    if (isset($_POST['enable_2fa'])) {
         $request = array();
-        $request['type'] = 'update_phone_number';
+        $request['type'] = 'generate_2fa';
         $request['user_id'] = $userId;
-        $request['phoneNum'] = null;  // reset phone number in table
 
-        $response = createRabbitMQClientDatabase($request);
-        
-        if ($response['success']) {
-            echo "<script>alert('Phone number removed successfully.'); window.location.href = 'profile.php';</script>";
+        $enableResponse = createRabbitMQClientDatabase($request);
+
+        if ($enableResponse['success']) {
+            $verificationCode = $enableResponse['verification_code'];
+            mail($email, "Your 2FA Verification Code", "Your verification code is: $verificationCode");
+            $codeSent = true; // Flag to indicate the code was sent
         } else {
-            echo "<div class='alert alert-danger'>Failed to remove phone number: {$response['message']}</div>";
+            echo "<div class='alert alert-danger'>Failed to enable 2FA: {$enableResponse['message']}</div>";
 	}
-}
+    // disable button
+    } elseif (isset($_POST['disable_2fa'])) {
+        $request = array();
+        $request['type'] = 'disable_2fa';
+        $request['user_id'] = $userId;
 
+        $disableResponse = createRabbitMQClientDatabase($request);
+
+        if ($disableResponse['success']) {
+		header("Location: " .$_SERVER['PHP_SELF']); //refresh page
+        } else {
+            echo "<div class='alert alert-danger'>Failed to disable 2FA: {$disableResponse['message']}</div>";
+	}
+    // compare with what's in database
+    } elseif (isset($_POST['submit_verification_code'])) {
+        $enteredCode = $_POST['verification_code'];
+
+        $request = array();
+        $request['type'] = 'verify_2fa_code';
+        $request['user_id'] = $userId;
+        $request['verification_code'] = $enteredCode;
+
+        $verifyResponse = createRabbitMQClientDatabase($request);
+
+        if ($verifyResponse['success']) {
+		echo "<div class='alert alert-success'>2FA has been successfully enabled.</div>";
+		header("Location: " .$_SERVER['PHP_SELF']); //refresh page
+        } else {
+            echo "<div class='alert alert-danger'>Invalid verification code. Please try again.</div>";
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -63,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['phoneNum'])) {
 </head>
 <body>
     <div class="container mt-5">
-	<h1>Contact Info</h1><br>
+        <h1>Contact Info</h1><br>
 
         <!-- Display user's email -->
         <?php if (isset($error_message)): ?>
@@ -72,34 +88,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['phoneNum'])) {
             <div class="mb-3">
                 <strong>Email: </strong> <?php echo $email; ?>
             </div>
-	<!-- Display form so user can add phone number-->
-	    <div class="mb-3">
-                <strong>Phone Number: </strong> 
-                <?php if (empty($phoneNum)): ?> +1
-                    <form action="profile.php" method="POST" class="d-inline">
-                        <input type="text" name="phoneNum" class="form-control d-inline w-50" placeholder="Enter phone number" maxlength="10" required>
-                        <button type="submit" class="btn btn-primary">Submit</button>
-                    </form>
-                <?php else: ?>
-		    +1 <?php echo $phoneNum; ?>
-		        <form action="profile.php" method="POST" class="d-inline">
-		            <input type="hidden" name="remove_phone" value="true">
-		            <button type="submit" class="btn btn-danger btn-sm ml-2">Remove</button>
-        		</form>
-                <?php endif; ?>
+            <div class="mb-3">
+                <strong>Two-Factor Authentication:</strong>
+                <?php echo $is2FAEnabled ? 'Enabled' : 'Disabled'; ?>
             </div>
+
+            <?php if ($is2FAEnabled): ?>
+                <form method="post">
+                    <button type="submit" name="disable_2fa" class="btn btn-danger">Disable 2FA</button>
+                </form>
+            <?php else: ?>
+                <form method="post">
+                    <button type="submit" name="enable_2fa" class="btn btn-primary">Enable 2FA</button>
+                </form>
+            <?php endif; ?>
+
+            <!-- Display the form for entering the verification code if the code has been sent -->
+            <?php if (isset($codeSent) && $codeSent): ?>
+                <div class="mt-4">
+                    <form method="POST" action="">
+                        <div class="form-group">
+                            <label for="verification_code">Enter the 4-digit verification code:</label>
+                            <input type="text" name="verification_code" id="verification_code" maxlength="4" required class="form-control">
+                        </div>
+                        <button type="submit" name="submit_verification_code" class="btn btn-success">Submit</button>
+                    </form>
+                </div>
+            <?php endif; ?>
+
         <?php endif; ?>
-
-        <!-- Display phone number update errors if any -->
-        <?php if (isset($update_error)): ?>
-            <div class="alert alert-danger"><?php echo $update_error; ?></div>
-        <?php endif; ?>
-
-
     </div>
 
     <!-- Bootstrap JS -->
     <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

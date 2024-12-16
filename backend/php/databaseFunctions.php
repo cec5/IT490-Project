@@ -932,7 +932,7 @@ function addPlayersIntoDatabase(){
 // SMS/PROFILE FUNCTIONS
 function getUserProfile($userId) {
     $conn = dbConnect();
-    $stmt = $conn->prepare("SELECT email, phoneNum FROM users WHERE id = ?");
+    $stmt = $conn->prepare("SELECT email, phoneNum, 2fa, code FROM users WHERE id = ?");
     if (!$stmt) {
         return array("success" => false, "message" => "Failed to prepare statement.");
     }
@@ -951,6 +951,8 @@ function getUserProfile($userId) {
     return array("success" => true, "user" => $user);
 }
 
+
+// not currently used
 function updatePhoneNumber($userId, $phoneNum) {
     $conn = dbConnect();
     $stmt = $conn->prepare("UPDATE users SET phoneNum = ? WHERE id = ?");
@@ -973,5 +975,143 @@ function updatePhoneNumber($userId, $phoneNum) {
     }
 }
 
+
+// generate 4 digit code
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+function generate2FACode($userId) {
+    $verificationCode = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+
+    // get user email
+    $conn = dbConnect();
+    $stmt = $conn->prepare("SELECT email FROM users WHERE id = ?");
+    if (!$stmt) {
+        return array("success" => false, "message" => "Failed to prepare statement.");
+    }
+
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+    $stmt->close();
+    $conn->close();
+
+    if (empty($user)) {
+        return array("success" => false, "message" => "User not found.");
+    }
+
+    $email = $user['email'];
+
+    // update table with code
+    $conn = dbConnect();
+    $stmt = $conn->prepare("UPDATE users SET code = ? WHERE id = ?");
+    if (!$stmt) {
+        return array("success" => false, "message" => "Failed to prepare statement.");
+    }
+
+    $stmt->bind_param("si", $verificationCode, $userId);
+    $result = $stmt->execute();
+    $stmt->close();
+    $conn->close();
+
+    if ($result) {
+        // send 2FA code to email
+        $mail = new PHPMailer(true);
+        try {
+            // Server settings
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'sysint8@gmail.com'; // common email
+            $mail->Password = 'pwsy qqop zbud iqdn'; // Google app password
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = 587;
+
+            // Sender info
+            $mail->setFrom('sysint8@gmail.com', 'IT490');
+
+            // Recipient
+            $mail->addAddress($email);
+
+            // Content
+            $mail->isHTML(true);
+            $mail->Subject = "Your 2FA Verification Code";
+            $mail->Body    = "Hello! Your 2FA verification code is: <strong>$verificationCode</strong>";
+
+            // Send the email
+            $mail->send();
+            return array("success" => true, "verification_code" => $verificationCode);
+        } catch (Exception $e) {
+            return array("success" => false, "message" => "Message could not be sent. Mailer Error: {$mail->ErrorInfo}");
+        }
+    } else {
+        return array("success" => false, "message" => "Failed to generate 2FA code.");
+    }
+}
+
+// set 2fa to 0 (off)
+function disable2FA($userId) {
+    $conn = dbConnect();
+    $stmt = $conn->prepare("UPDATE users SET 2fa = 0, code = NULL WHERE id = ?");
+    if (!$stmt) {
+        return array("success" => false, "message" => "Failed to prepare statement.");
+    }
+
+    $stmt->bind_param("i", $userId);
+    $result = $stmt->execute();
+    $stmt->close();
+    $conn->close();
+
+    if ($result) {
+        return array("success" => true, "message" => "2FA disabled successfully.");
+    } else {
+        return array("success" => false, "message" => "Failed to disable 2FA.");
+    }
+}
+
+// check users input with code in table
+function verify2FACode($userId, $verificationCode) {
+    $conn = dbConnect();
+    $stmt = $conn->prepare("SELECT code FROM users WHERE id = ?");
+    if (!$stmt) {
+        return array("success" => false, "message" => "Failed to prepare statement.");
+    }
+
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+    $stmt->close();
+
+    if (empty($user)) {
+        $conn->close();
+        return array("success" => false, "message" => "User not found.");
+    }
+
+    // check if codes match
+    if ($user['code'] !== $verificationCode) {
+        $conn->close();
+        return array("success" => false, "message" => "Invalid verification code.");
+    }
+
+    // if they match, make sure 2fa is 1 (on), remove code after verified
+    $stmt = $conn->prepare("UPDATE users SET 2fa = 1, code = NULL WHERE id = ?");
+    if (!$stmt) {
+        $conn->close();
+        return array("success" => false, "message" => "Failed to prepare statement.");
+    }
+
+    $stmt->bind_param("i", $userId);
+    $result = $stmt->execute();
+    $stmt->close();
+    $conn->close();
+
+    if ($result) {
+        return array("success" => true, "message" => "2FA verification successful.");
+    } else {
+        return array("success" => false, "message" => "Failed to update 2FA status.");
+    }
+}
 
 ?>

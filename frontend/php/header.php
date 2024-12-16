@@ -48,7 +48,10 @@
                     <li class="nav-item" id="myLeagues" style="display: none;">
                         <a class="nav-link" href="myleagues.php">My Leagues</a>
                     </li>
-                    <li class="nav-item" id="logoutButton" style="display: none;">
+		    <li class="nav-item" id="profile" style="display: none;">
+                        <a class="nav-link" href="profile.php">Profile</a>
+                    </li>
+		    <li class="nav-item" id="logoutButton" style="display: none;">
                         <a class="nav-link" href="#" onclick="logout()">Logout</a>
                     </li>
                 </ul>
@@ -72,7 +75,8 @@
                 // Show the Logout button and hide Login/Register links
                 document.getElementById("logoutButton").style.display = "block";
                 document.getElementById("myLeagues").style.display = "block";
-                document.getElementById("leaguesList").style.display = "block";
+		document.getElementById("leaguesList").style.display = "block";
+		document.getElementById("profile").style.display = "block";
                 document.querySelector('a[href="login.php"]').style.display = "none";
                 document.querySelector('a[href="register.php"]').style.display = "none";
             }

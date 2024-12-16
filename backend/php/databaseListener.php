@@ -69,6 +69,12 @@ function requestProcessor($request){
 			return getUserProfile($request['user_id']);
 		case "update_phone_number":
 			return updatePhoneNumber($request['user_id'], $request['phoneNum']);
+		case "generate_2fa":
+			return generate2FACode($request['user_id']);
+		case "disable_2fa":
+			return disable2FA($request['user_id']);
+		case "verify_2fa_code":
+			return verify2FACode($request['user_id'], $request['verification_code']);
 	}
 	return array("returnCode" => '0', 'message'=>"Database Server received request and processed");
 }
