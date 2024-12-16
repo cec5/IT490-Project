@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
         	$postResponse = createRabbitMQClientDatabase($postRequest);
 
         	if ($postResponse['success']) {
-            		echo "<script>alert('Message posted successfully!'); window.location.href = 'league.php?id={$leagueId}';</script>";
+            		echo "<script>alert('Message posted successfully!'); window.location.href = 'league.php?league_id={$leagueId}';</script>";
         	} else {
             		echo "<div class='alert alert-danger'>Failed to post the message: {$postResponse['message']}</div>";
         	}

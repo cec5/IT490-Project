@@ -71,7 +71,7 @@ function doLogin($username, $password) {
     	if ($user && password_verify($password, $user['password'])) {
         	// Generate JWT token
         	$token = generateJWT($user['id']);
-        	$message = array("success" => true, "token" => $token);
+        	$message = array("success" => true, "token" => $token, "message" => "Login Successful");
     	} else {
         	$message = array("success" => false, "message" => "Invalid username or password.");
     	}
@@ -614,7 +614,7 @@ function getUserReservePlayers($userId, $leagueId) {
     	if (empty($reservePlayers)) {
         	return array("success" => false, "message" => "No reserve players found.");
     	}
-    	return array("success" => true, "reserve_players" => $reservePlayers);
+    	return array("success" => true, "reserve_players" => $reservePlayers, "message" => "Reserve players found");
 }
 
 function getLeagueMembers($leagueId, $userId = null) {
@@ -674,12 +674,10 @@ function getOtherReservePlayers($userId, $leagueId) {
     	if (empty($reservePlayers)) {
         	return array("success" => false, "message" => "No reserve players found for other members.");
     	}
-    	return array("success" => true, "reserve_players" => $reservePlayers);
+    	return array("success" => true, "reserve_players" => $reservePlayers, "message" => "Other members' reserve players found");
 }
 
-
 // Trade-Related Functions
-
 
 // Helper function to check if user has a pending trade in the league
 function hasPendingTrade($userId, $leagueId) {
@@ -877,7 +875,7 @@ function getPendingTrades($userId, $leagueId) {
     	if (empty($trades)) {
         	return array("success" => false, "message" => "No pending trades found.");
     	}
-    	return array("success" => true, "trades" => $trades);
+    	return array("success" => true, "trades" => $trades, "message" => "Pending trades found");
 }
 
 // API-Related Functions
