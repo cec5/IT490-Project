@@ -1,0 +1,2 @@
+Virtual IP for PROD Backend/Standby RabbitMQ
+172.23.84.14
