@@ -115,13 +115,13 @@ function requestProcessor($request){
     			responseLog($store);
     			return $store;
     		case "get_other_reserve_players":
-   			    $store = getOtherReservePlayers($request['user_id'], $request['league_id']);
-   			    responseLog($store);
-    			    return $store;
-	      case "get_user_profile":
+   			$store = getOtherReservePlayers($request['user_id'], $request['league_id']);
+   			responseLog($store);
+    			return $store;
+	      	case "get_user_profile":
 			return getUserProfile($request['user_id']);
 		case "update_phone_number":
-			  return updatePhoneNumber($request['user_id'], $request['phoneNum']);
+			return updatePhoneNumber($request['user_id'], $request['phoneNum']);
 		case "generate_2fa":
 			return generate2FACode($request['user_id']);
 		case "disable_2fa":
