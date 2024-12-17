@@ -4,7 +4,10 @@ CREATE TABLE users (
  	username VARCHAR(50) NOT NULL UNIQUE,
   	email VARCHAR(100) NOT NULL,
   	password VARCHAR(255) NOT NULL,
-  	epoch INT(11) NOT NULL
+  	epoch INT(11) NOT NULL,
+	phoneNum varchar(15) DEFAULT NULL,
+  	`2fa` tinyint(1) NOT NULL DEFAULT 0,
+  	code char(4) DEFAULT NULL
 );
 
 /*table that stores simple info from matches*/
