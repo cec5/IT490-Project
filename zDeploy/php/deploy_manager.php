@@ -1,6 +1,7 @@
 <?php
 require_once('client_rmq_deploy.php');
 require_once('clusterFunctions.php');
+$connection = createSSHConnection('172.23.193.68', 22);
 $allBundles = parse_ini_file('../config/bundles.ini', true);
 
 // echo var_dump($allBundles);
@@ -14,7 +15,7 @@ if ($targetAction == null) {
 }
 
 if ($targetAction == "pushBundle") {
-    $connection = createSSHConnection('172.23.193.68', 22);
+    echo $targetAction;
     // $outie = shell_exec('../../installScripts/upload.sh');
     // echo $outie;
 

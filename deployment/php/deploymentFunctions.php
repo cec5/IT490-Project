@@ -322,7 +322,7 @@ function newFanout($requestObj) {
     // some case to filter to only PASSing builds
     $res = $mydb->query($query);
     $data = $res->fetch_assoc();
-    if ($data == null) {
+    if ($data != null) {
         $version = $data["VersionId"];
         $targetMachine = $data["TargetMachine"];
         $bundlePath = $data["FilePath"]; // slightly misleading, THIS IS THE STORED PATH ON DEPLOYMENT
@@ -335,41 +335,13 @@ function newFanout($requestObj) {
         //
         $conn = createSSHConnection($location, 22);
     
-        // figure out the remote path to be replaced
         $allBundles = parse_ini_file('../config/bundles.ini', true);
         $filePath = $allBundles[$bundleName]["BUNDLE_PATH"]; // THIS IS THE LOCAL/CLIENT FILE PATH
-        // $exec = ssh2_exec($conn, "rm -rf $filePath");
         $exec = ssh2_exec($conn, "ls $filePath");
-    
-        // pack it up bc we can't xfer directories
-    
-        // $thatPath = getRelativePath('/home/luke/git/IT490-Project/zDeploy/php', $filePath);
-        // echo var_dump($thatPath);
-        // exec("tar -czvf ../upload/sendoff.tar.gz $thatPath");
-        
-        // $thatPath = getRelativePath('/home/luke/git/IT490-Project/zDeploy/php', $filePath);
-        // echo var_dump($thatPath);
-        // exec("tar -czvf ../upload/sendoff.tar.gz  -C $thatPath .");
     
         echo "rsync -av $bundlePath/ $location:$filePath";
     
-        exec("rsync -av $bundlePath/ $location:$filePath"); // this SHOULD sync the two.
-        // holding cell
-        // sendFile($conn, '../upload/sendoff.tar.gz', "/opt/store/$bundleName-v$version.tar.gz");
-    
-        // $res = ssh2_exec($connection, "/usr/bin/tar -xzvf /opt/store/$bundleName-v$versionNumber.tar.gz -C /home/luke/git/IT490-Project/deployment/bundles/$bundleName-v$versionNumber");
-    
-        // $res = ssh2_exec($conn, "cd /opt/store; chmod ugo+x /opt/store/$bundleName-v$version.tar.gz; mkdir $bundleName-v$version; tar -xzvf /opt/store/$bundleName-v$version.tar.gz -C ./$bundleName-v$version; echo done; pwd; rm $bundleName-v$version.tar.gz");
-        
-        // $res = ssh2_exec($connection, "cat /opt/store/$bundleName-v$versionNumber.tar.gz | tar zxvf -");
-        // echo var_dump(stream_get_contents($res));
-    
-        /*
-        $errs = ssh2_fetch_stream($res, 0);
-        stream_set_blocking($errs, true);
-        $result_err = stream_get_contents($errs);
-        echo 'stderr: ' . $result_err;
-        */
+        $res = exec("rsync -av $bundlePath/ $location:$filePath");
     
     
         return true;
