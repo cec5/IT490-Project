@@ -12,32 +12,30 @@ folders=(
     "$parent_dir/installScripts"
 )
 
-# Define the output archive location
-output_archive="$parent_dir/zDeploy/upload/sendoff.tar.gz"
+# Define the base output directory for the archives
+output_dir="$parent_dir/zDeploy/upload"
 
 # Ensure the target directory exists
-mkdir -p "$(dirname "$output_archive")"
+mkdir -p "$output_dir"
 
-# Create the archive, filtering out non-existent folders
-echo "Creating archive at $output_archive..."
-tar_command="tar -czvf \"$output_archive\""
-
+# Create separate archives for each folder
 for folder in "${folders[@]}"; do
     if [[ -d "$folder" ]]; then
-        tar_command+=" -C \"$parent_dir\" \"$(basename "$folder")\""
+        folder_name=$(basename "$folder")
+        output_archive="$output_dir/$folder_name.tar.gz"
+
+        echo "Creating archive for $folder at $output_archive..."
+        tar -czvf "$output_archive" -C "$parent_dir" "$folder_name"
+
+        if [[ $? -eq 0 ]]; then
+            echo "Archive for $folder created successfully."
+        else
+            echo "Error: Failed to create archive for $folder." >&2
+            exit 1
+        fi
     else
         echo "Warning: $folder does not exist and will be skipped." >&2
     fi
 done
 
-# Execute the tar command
-eval $tar_command
-tar_exit_code=$?
-
-# Check if tar succeeded
-if [[ $tar_exit_code -eq 0 ]]; then
-    echo "Archive created successfully at $output_archive."
-else
-    echo "Warning: Archive creation encountered issues but may still have completed."
-    exit 1
-fi
+echo "All archives created successfully in $output_dir."

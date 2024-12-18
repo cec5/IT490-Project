@@ -69,6 +69,40 @@ function storeBundle($requestObj) {
     //
 }
 
+// https://stackoverflow.com/a/2638272/22172110
+
+function getRelativePath($from, $to) {
+    // some compatibility fixes for Windows paths
+    $from = is_dir($from) ? rtrim($from, '\/') . '/' : $from;
+    $to   = is_dir($to)   ? rtrim($to, '\/') . '/'   : $to;
+    $from = str_replace('\\', '/', $from);
+    $to   = str_replace('\\', '/', $to);
+
+    $from     = explode('/', $from);
+    $to       = explode('/', $to);
+    $relPath  = $to;
+
+    foreach($from as $depth => $dir) {
+        // find first non-matching dir
+        if($dir === $to[$depth]) {
+            // ignore this directory
+            array_shift($relPath);
+        } else {
+            // get number of remaining dirs to $from
+            $remaining = count($from) - $depth;
+            if($remaining > 1) {
+                // add traversals up to first matching dir
+                $padLength = (count($relPath) + $remaining - 1) * -1;
+                $relPath = array_pad($relPath, $padLength, '..');
+                break;
+            } else {
+                $relPath[0] = './' . $relPath[0];
+            }
+        }
+    }
+    return implode('/', $relPath);
+}
+
 function writeFileToDB($requestObj) {
     $mydb = new mysqli('localhost','testUser','12345','testdb');
     $filePath = $requestObj['filePath'];
@@ -199,7 +233,8 @@ function approveBuild($input) {
         die("Connection failed: " . $mydb->connect_error);
     }
 
-    $build = $input['build'];
+    $bundleName = $input['bundleName'];
+    $version = $input['version'];
     $status = $input['status'];
 
     if (!in_array($status, ['PASS', 'FAIL', 'NEW'])) {
@@ -208,55 +243,132 @@ function approveBuild($input) {
     }
 
     try {
-        if ($build === "latest") {
-            // Find the newest VersionId and update its TestStatus
-            $query = "SELECT VersionId FROM versionHistory ORDER BY VersionId DESC LIMIT 1";
-            $result = $mydb->query($query);
-
-            if ($result && $result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $versionId = $row['VersionId'];
-
-                $updateQuery = "UPDATE versionHistory SET TestStatus = '$status' WHERE VersionId = $versionId";
-                if ($mydb->query($updateQuery)) {
-                    return true;
-                } else {
-                    echo "Error updating status: " . $mydb->error . "\n";
-                    return false;
-                }
-            } else {
-                echo "Error: No records found.\n";
-                return false;
-            }
-        } else {
-            // Search for a build by BundleName
-            $query = "SELECT VersionId FROM versionHistory WHERE BundleName = ?";
-            $stmt = $mydb->prepare($query);
-            $stmt->bind_param("s", $build);
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            if ($result && $result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $versionId = $row['VersionId'];
-
-                $updateQuery = "UPDATE versionHistory SET TestStatus = '$status' WHERE VersionId = $versionId";
-                if ($mydb->query($updateQuery)) {
-                    return true;
-                } else {
-                    echo "Error updating status: " . $mydb->error . "\n";
-                    return false;
-                }
-            } else {
-                return false; // No matching build found!
-            }
-        }
+        $stmt = "UPDATE versionHistory SET TestStatus = '$status' WHERE BundleName = '$bundleName' AND VersionId = '$version'";
+	    $res = $mydb->query($stmt);
+	    return $res;
     } catch (Exception $e) {
         echo "Error: " . $e->getMessage() . "\n";
         return false;
     } finally {
         $mydb->close();
     }
+}
+
+
+function getLatestByBundle($bundleName) {
+    $mydb = new mysqli('localhost', 'testUser', '12345', 'testdb');
+    
+    if ($mydb->connect_error) {
+        die("Connection failed: " . $mydb->connect_error);
+    }
+
+    $sql = "SELECT ifnull((SELECT MAX(VersionId) FROM versionHistory WHERE BundleName = '$bundleName'), 0) AS versionNumber";
+    $stmt = $mydb->query($sql);
+
+    $result = $stmt->fetch_assoc();
+    if ($result == null) {
+        return 0;
+    } else {
+        $version = $result["versionNumber"];
+    }
+
+    $stmt->close();
+    $mydb->close();
+    return $version + 1;
+}
+
+function dryAddBundle($requestObj) {
+    $mydb = new mysqli('localhost','testUser','12345','testdb');
+    $bundleName = $requestObj['bundleName'];
+    $bundlePath = $requestObj['bundlePath'];
+    $bundleMachine = $requestObj['bundleMachine'];
+    $currentBundleVersion = getLatestByBundle($bundleName);
+
+    $assembledPath = "/opt/store/$bundleName-v$currentBundleVersion";
+    
+    //bundleName" => $bundleName, "bundlePath" => $bundlePath, "bundleMachine" => $bundleMachine
+
+    try{
+		$query = "INSERT INTO versionHistory (VersionId, BundleName, TestStatus, TargetMachine, FilePath) VALUES ('$currentBundleVersion', '$bundleName', 'NEW', '$bundleMachine', '$assembledPath')";
+		$response = $mydb->query($query);
+		
+		if ($response) {
+			return array("version" => $currentBundleVersion);
+		} else {
+			throw new Exception("Database error: " . $mydb->error);
+		}
+    } catch (Exception $e) {
+		return "Error: " . $e->getMessage();
+	}
+}
+
+function newFanout($requestObj) {
+    $mydb = new mysqli('localhost','testUser','12345','testdb');
+    $bundleName = $requestObj["bundleName"];
+    $cluster = $requestObj["cluster"];
+    $ipMaps = [
+        "QA" => [
+            "FRONTEND" => "172.23.213.242",
+            "DMZ" => "172.23.96.14",
+            "BACKEND" => "172.23.0.118"
+        ],
+        "PROD" => [
+            "FRONTEND" => "172.23.19.155",
+            "DMZ" => "172.23.138.156",
+            "BACKEND" => "172.23.90.234"
+        ]
+    ];
+    $query = "SELECT * FROM versionHistory WHERE VersionId IN (SELECT MAX(VersionId) FROM versionHistory WHERE BundleName = '$bundleName') AND BundleName = '$bundleName'";
+    // some case to filter to only PASSing builds
+    $res = $mydb->query($query);
+    $data = $res->fetch_assoc();
+    $version = $data["VersionId"];
+    $targetMachine = $data["TargetMachine"];
+    $bundlePath = $data["FilePath"]; // slightly misleading, THIS IS THE STORED PATH ON DEPLOYMENT
+    //
+    $location = $ipMaps[$cluster][$targetMachine];
+    echo $location;
+    //
+    // $conn = createSSHConnection($location, 22);
+    $conn = createSSHConnection('172.23.193.68', 22); // USE FOR TESTING ONLY!!!!
+
+    // figure out the remote path to be replaced
+    $allBundles = parse_ini_file('../config/bundles.ini', true);
+    $filePath = $allBundles[$bundleName]["BUNDLE_PATH"]; // THIS IS THE LOCAL/CLIENT FILE PATH
+    // $exec = ssh2_exec($conn, "rm -rf $filePath");
+    $exec = ssh2_exec($conn, "ls $filePath");
+
+    // pack it up bc we can't xfer directories
+
+    // $thatPath = getRelativePath('/home/luke/git/IT490-Project/zDeploy/php', $filePath);
+    // echo var_dump($thatPath);
+    // exec("tar -czvf ../upload/sendoff.tar.gz $thatPath");
+
+    echo "rsync -av $bundlePath $location:$filePath";
+
+    exec("rsync -av $bundlePath $location:$filePath"); // this SHOULD sync the two.
+    // holding cell
+    // sendFile($conn, '../upload/sendoff.tar.gz', "/opt/store/$bundleName-v$version.tar.gz");
+
+    // $res = ssh2_exec($connection, "/usr/bin/tar -xzvf /opt/store/$bundleName-v$versionNumber.tar.gz -C /home/luke/git/IT490-Project/deployment/bundles/$bundleName-v$versionNumber");
+
+    // $res = ssh2_exec($conn, "cd /opt/store; chmod ugo+x /opt/store/$bundleName-v$version.tar.gz; mkdir $bundleName-v$version; tar -xzvf /opt/store/$bundleName-v$version.tar.gz -C ./$bundleName-v$version; echo done; pwd; rm $bundleName-v$version.tar.gz");
+    
+    // $res = ssh2_exec($connection, "cat /opt/store/$bundleName-v$versionNumber.tar.gz | tar zxvf -");
+    // echo var_dump(stream_get_contents($res));
+
+    /*
+    $errs = ssh2_fetch_stream($res, 0);
+    stream_set_blocking($errs, true);
+    $result_err = stream_get_contents($errs);
+    echo 'stderr: ' . $result_err;
+    */
+
+
+
+
+    die();
+    $res = ssh2_exec($conn, "cd /opt/store; chmod ugo+x /opt/store/$bundleName-v$versionNumber.tar.gz; mkdir $bundleName-v$versionNumber; tar -xzvf /opt/store/$bundleName-v$versionNumber.tar.gz -C ./$bundleName-v$versionNumber; echo done; pwd; rm $bundleName-v$versionNumber.tar.gz");
 }
 
 

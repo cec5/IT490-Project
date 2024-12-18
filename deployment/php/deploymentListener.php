@@ -12,10 +12,6 @@ function requestProcessor($request) {
         	return "ERROR: unsupported message type";
     	}
     	switch ($request['type']) {
-        	case "test":
-				return "Test message received from Deployment Server" . PHP_EOL;
-            	// Other cases would involve storing zipped files (sent from DEV), then adding an entry to the database
-            	// Have a case that is dedicated to pass/fail
 			case "doFanout":
 				if (!isset($request['target'])) {
 					return "Missing deploy target group\n";
@@ -23,7 +19,6 @@ function requestProcessor($request) {
 				if (($request['target'] != 'qa') && ($request['target'] != 'prod')) {
 					return "Invalid deploy target group\n";
 				}
-				//
 				$latestStableVersion = getLatestStableVersion($request);
 				echo var_dump($latestStableVersion);
 				if ($latestStableVersion != null) {
@@ -45,6 +40,12 @@ function requestProcessor($request) {
 			case "approveBuild":
 				$ret = approveBuild($request);
 				return $ret ? "Build approved successfully." . PHP_EOL : "Failed to approve build.\n" . PHP_EOL;
+			case "dryAddBundle":
+				$ret = dryAddBundle($request);
+				return $ret;
+			case "newFanout":
+				$ret = newFanout($request);
+				return $ret;
     	}
     	return array("returnCode" => '0', 'message' => "Deployment Server received request and processed");
 }
