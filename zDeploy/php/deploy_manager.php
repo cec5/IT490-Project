@@ -15,21 +15,21 @@ if ($targetAction == null) {
 
 if ($targetAction == "pushBundle") {
     $connection = createSSHConnection('172.23.193.68', 22);
-    $outie = shell_exec('../../installScripts/upload.sh');
+    // $outie = shell_exec('../../installScripts/upload.sh');
     // echo $outie;
 
     $bundleName = $argv[2];
     if ($bundleName == null) {
         echo "hey i need to know what bundle ur pushing". PHP_EOL;
         echo "make sure u use the ones ur role is compatible w. todo: var_dump the ini here". PHP_EOL;
-        echo "try FrontendPhp / BackendPhp". PHP_EOL;
+        echo "try FrontendPhp / BackendPhp / BackendLogging". PHP_EOL;
         die();
     }
     echo var_dump($allBundles[$bundleName]);
     $filePath = $allBundles[$bundleName]["BUNDLE_PATH"];
     $bundleMachine = $allBundles[$bundleName]["BUNDLE_MACHINE"];
     $systemRole;
-    $override = $argv[3] == null ? false : ($argv[3] == "--override" ? true : false);
+    @$override = $argv[3] == null ? false : ($argv[3] == "--override" ? true : false);
     echo var_dump($override);
     if ($systemRole != $bundleMachine && ($override == null || $override != true)) {
         echo "hey man ur doin smth u shouldnt be." . PHP_EOL;
@@ -132,8 +132,9 @@ if ($targetAction == "pushBundle") {
 
     $request = ["type" => "rollback", "bundleName" => $bundleName, "cluster" => $cluster];
     $returnedResponse = sendToDeployment($request);
+} else {
+    echo "Available commands:\n\tpushBundle [BUNDLE_NAME]\n\tapproveBundle [BUNDLE_NAME] [VERSION] [PASS/FAIL]\n\tfanout [BUNDLE_NAME] [PROD|QA]\n\n";
 }
 
-echo "Available commands:\n\tpushBundle [BUNDLE_NAME]\n\tapproveBundle [BUNDLE_NAME] [VERSION] [PASS/FAIL]\n\tfanout [BUNDLE_NAME] [PROD|QA]\n\n";
 exit();
 ?>
