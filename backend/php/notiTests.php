@@ -135,7 +135,7 @@ try {
                         // Content
                         $mail->isHTML(true);
                         $mail->Subject = "Weekly Update for $leagueName";
-                        $mail->Body = "Hello! Here is your weekly update for the $leagueName.";
+                        $mail->Body = "Here is your daily update for league $leagueName. Make sure to check the leaderboard to see your current position.";
                         //$mail->AltBody = "Hello! Here is your weekly update for the $leagueName."; // can add if wanted
 
                         // Send

@@ -1034,8 +1034,8 @@ function generate2FACode($userId) {
 
             // Content
             $mail->isHTML(true);
-            $mail->Subject = "Your 2FA Verification Code";
-            $mail->Body    = "Hello! Your 2FA verification code is: <strong>$verificationCode</strong>";
+            $mail->Subject = "2FA Verification Code";
+            $mail->Body    = "Your code is: <strong>$verificationCode</strong>";
 
             // Send the email
             $mail->send();
