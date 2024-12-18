@@ -9,7 +9,7 @@ echo "Designated as role: " . $systemRole . PHP_EOL;
 
 @$targetAction = $argv[1];
 if ($targetAction == null) {
-    echo "Available commands:\n\tpushBundle [BUNDLE_NAME]\n\tapproveBundle [BUNDLE_NAME] [VERSION] [PASS/FAIL]\n\n";
+    echo "Available commands:\n\tpushBundle [BUNDLE_NAME]\n\tapproveBundle [BUNDLE_NAME] [VERSION] [PASS/FAIL]\n\tfanout [BUNDLE_NAME] [PROD|QA]\n\n";
     die();
 }
 
@@ -54,7 +54,7 @@ if ($targetAction == "pushBundle") {
         // pack it up bc we can't xfer directories
         $thatPath = getRelativePath('/home/luke/git/IT490-Project/zDeploy/php', $filePath);
         echo var_dump($thatPath);
-        exec("tar -czvf ../upload/sendoff.tar.gz $thatPath");
+        exec("tar -czvf ../upload/sendoff.tar.gz  -C $thatPath .");
         // holding cell
         sendFile($connection, '../upload/sendoff.tar.gz', "/opt/store/$bundleName-v$versionNumber.tar.gz");
 
@@ -106,5 +106,6 @@ if ($targetAction == "pushBundle") {
     $returnedResponse = sendToDeployment($request);
 }
 
+echo "Available commands:\n\tpushBundle [BUNDLE_NAME]\n\tapproveBundle [BUNDLE_NAME] [VERSION] [PASS/FAIL]\n\tfanout [BUNDLE_NAME] [PROD|QA]\n\n";
 exit();
 ?>

@@ -328,9 +328,11 @@ function newFanout($requestObj) {
     //
     $location = $ipMaps[$cluster][$targetMachine];
     echo $location;
+
+    // LOCALHOST OVERRIDE
+    $location = "172.23.193.68";
     //
-    // $conn = createSSHConnection($location, 22);
-    $conn = createSSHConnection('172.23.193.68', 22); // USE FOR TESTING ONLY!!!!
+    $conn = createSSHConnection($location, 22);
 
     // figure out the remote path to be replaced
     $allBundles = parse_ini_file('../config/bundles.ini', true);
@@ -343,10 +345,14 @@ function newFanout($requestObj) {
     // $thatPath = getRelativePath('/home/luke/git/IT490-Project/zDeploy/php', $filePath);
     // echo var_dump($thatPath);
     // exec("tar -czvf ../upload/sendoff.tar.gz $thatPath");
+    
+    // $thatPath = getRelativePath('/home/luke/git/IT490-Project/zDeploy/php', $filePath);
+    // echo var_dump($thatPath);
+    // exec("tar -czvf ../upload/sendoff.tar.gz  -C $thatPath .");
 
-    echo "rsync -av $bundlePath $location:$filePath";
+    echo "rsync -av $bundlePath/ $location:$filePath";
 
-    exec("rsync -av $bundlePath $location:$filePath"); // this SHOULD sync the two.
+    exec("rsync -av $bundlePath/ $location:$filePath"); // this SHOULD sync the two.
     // holding cell
     // sendFile($conn, '../upload/sendoff.tar.gz', "/opt/store/$bundleName-v$version.tar.gz");
 
@@ -365,7 +371,7 @@ function newFanout($requestObj) {
     */
 
 
-
+    return true;
 
     die();
     $res = ssh2_exec($conn, "cd /opt/store; chmod ugo+x /opt/store/$bundleName-v$versionNumber.tar.gz; mkdir $bundleName-v$versionNumber; tar -xzvf /opt/store/$bundleName-v$versionNumber.tar.gz -C ./$bundleName-v$versionNumber; echo done; pwd; rm $bundleName-v$versionNumber.tar.gz");
