@@ -322,6 +322,124 @@ function newFanout($requestObj) {
     // some case to filter to only PASSing builds
     $res = $mydb->query($query);
     $data = $res->fetch_assoc();
+    if ($data == null) {
+        $version = $data["VersionId"];
+        $targetMachine = $data["TargetMachine"];
+        $bundlePath = $data["FilePath"]; // slightly misleading, THIS IS THE STORED PATH ON DEPLOYMENT
+        //
+        $location = $ipMaps[$cluster][$targetMachine];
+        echo $location;
+    
+        // LOCALHOST OVERRIDE
+        $location = "172.23.193.68";
+        //
+        $conn = createSSHConnection($location, 22);
+    
+        // figure out the remote path to be replaced
+        $allBundles = parse_ini_file('../config/bundles.ini', true);
+        $filePath = $allBundles[$bundleName]["BUNDLE_PATH"]; // THIS IS THE LOCAL/CLIENT FILE PATH
+        // $exec = ssh2_exec($conn, "rm -rf $filePath");
+        $exec = ssh2_exec($conn, "ls $filePath");
+    
+        // pack it up bc we can't xfer directories
+    
+        // $thatPath = getRelativePath('/home/luke/git/IT490-Project/zDeploy/php', $filePath);
+        // echo var_dump($thatPath);
+        // exec("tar -czvf ../upload/sendoff.tar.gz $thatPath");
+        
+        // $thatPath = getRelativePath('/home/luke/git/IT490-Project/zDeploy/php', $filePath);
+        // echo var_dump($thatPath);
+        // exec("tar -czvf ../upload/sendoff.tar.gz  -C $thatPath .");
+    
+        echo "rsync -av $bundlePath/ $location:$filePath";
+    
+        exec("rsync -av $bundlePath/ $location:$filePath"); // this SHOULD sync the two.
+        // holding cell
+        // sendFile($conn, '../upload/sendoff.tar.gz', "/opt/store/$bundleName-v$version.tar.gz");
+    
+        // $res = ssh2_exec($connection, "/usr/bin/tar -xzvf /opt/store/$bundleName-v$versionNumber.tar.gz -C /home/luke/git/IT490-Project/deployment/bundles/$bundleName-v$versionNumber");
+    
+        // $res = ssh2_exec($conn, "cd /opt/store; chmod ugo+x /opt/store/$bundleName-v$version.tar.gz; mkdir $bundleName-v$version; tar -xzvf /opt/store/$bundleName-v$version.tar.gz -C ./$bundleName-v$version; echo done; pwd; rm $bundleName-v$version.tar.gz");
+        
+        // $res = ssh2_exec($connection, "cat /opt/store/$bundleName-v$versionNumber.tar.gz | tar zxvf -");
+        // echo var_dump(stream_get_contents($res));
+    
+        /*
+        $errs = ssh2_fetch_stream($res, 0);
+        stream_set_blocking($errs, true);
+        $result_err = stream_get_contents($errs);
+        echo 'stderr: ' . $result_err;
+        */
+    
+    
+        return true;
+    } else {
+        return false;
+    }
+
+    die();
+}
+
+function requestVersion($requestObj) {
+    $mydb = new mysqli('localhost','testUser','12345','testdb');
+    $bundleName = $requestObj["bundleName"];
+    $cluster = $requestObj["cluster"];
+    $version = $requestObj["version"];
+    $ipMaps = [
+        "QA" => [
+            "FRONTEND" => "172.23.213.242",
+            "DMZ" => "172.23.96.14",
+            "BACKEND" => "172.23.0.118"
+        ],
+        "PROD" => [
+            "FRONTEND" => "172.23.19.155",
+            "DMZ" => "172.23.138.156",
+            "BACKEND" => "172.23.90.234"
+        ]
+    ];
+    $query = "SELECT * FROM versionHistory WHERE VersionId IN (SELECT MAX(VersionId) FROM versionHistory WHERE BundleName = '$bundleName' AND VersionId = '$version') AND BundleName = '$bundleName'";
+    // some case to filter to only PASSing builds
+    $res = $mydb->query($query);
+    $data = $res->fetch_assoc();
+    if ($data != null) {
+        $targetMachine = $data["TargetMachine"];
+        $bundlePath = $data["FilePath"]; // slightly misleading, THIS IS THE STORED PATH ON DEPLOYMENT
+        $location = $ipMaps[$cluster][$targetMachine];
+    
+        // LOCALHOST OVERRIDE
+        $location = "172.23.193.68";
+    
+        $conn = createSSHConnection($location, 22);
+    
+        $allBundles = parse_ini_file('../config/bundles.ini', true);
+        $filePath = $allBundles[$bundleName]["BUNDLE_PATH"]; // THIS IS THE LOCAL/CLIENT FILE PATH
+    
+        exec("rsync -av $bundlePath/ $location:$filePath");
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function rollback($requestObj) {
+    $mydb = new mysqli('localhost','testUser','12345','testdb');
+    $bundleName = $requestObj["bundleName"];
+    $cluster = $requestObj["cluster"];
+    $ipMaps = [
+        "QA" => [
+            "FRONTEND" => "172.23.213.242",
+            "DMZ" => "172.23.96.14",
+            "BACKEND" => "172.23.0.118"
+        ],
+        "PROD" => [
+            "FRONTEND" => "172.23.19.155",
+            "DMZ" => "172.23.138.156",
+            "BACKEND" => "172.23.90.234"
+        ]
+    ];
+    $query = "SELECT * FROM versionHistory WHERE VersionId IN (SELECT MAX(VersionId) FROM versionHistory WHERE BundleName = '$bundleName' AND TestStatus = 'PASS') AND BundleName = '$bundleName'";
+    $res = $mydb->query($query);
+    $data = $res->fetch_assoc();
     $version = $data["VersionId"];
     $targetMachine = $data["TargetMachine"];
     $bundlePath = $data["FilePath"]; // slightly misleading, THIS IS THE STORED PATH ON DEPLOYMENT
@@ -329,7 +447,7 @@ function newFanout($requestObj) {
     $location = $ipMaps[$cluster][$targetMachine];
     echo $location;
 
-    // LOCALHOST OVERRIDE
+    // LOCALHOST OVERRIDE. UNCOMMENT!!!!!!!!!
     $location = "172.23.193.68";
     //
     $conn = createSSHConnection($location, 22);
@@ -340,41 +458,13 @@ function newFanout($requestObj) {
     // $exec = ssh2_exec($conn, "rm -rf $filePath");
     $exec = ssh2_exec($conn, "ls $filePath");
 
-    // pack it up bc we can't xfer directories
-
-    // $thatPath = getRelativePath('/home/luke/git/IT490-Project/zDeploy/php', $filePath);
-    // echo var_dump($thatPath);
-    // exec("tar -czvf ../upload/sendoff.tar.gz $thatPath");
-    
-    // $thatPath = getRelativePath('/home/luke/git/IT490-Project/zDeploy/php', $filePath);
-    // echo var_dump($thatPath);
-    // exec("tar -czvf ../upload/sendoff.tar.gz  -C $thatPath .");
-
     echo "rsync -av $bundlePath/ $location:$filePath";
 
-    exec("rsync -av $bundlePath/ $location:$filePath"); // this SHOULD sync the two.
-    // holding cell
-    // sendFile($conn, '../upload/sendoff.tar.gz', "/opt/store/$bundleName-v$version.tar.gz");
-
-    // $res = ssh2_exec($connection, "/usr/bin/tar -xzvf /opt/store/$bundleName-v$versionNumber.tar.gz -C /home/luke/git/IT490-Project/deployment/bundles/$bundleName-v$versionNumber");
-
-    // $res = ssh2_exec($conn, "cd /opt/store; chmod ugo+x /opt/store/$bundleName-v$version.tar.gz; mkdir $bundleName-v$version; tar -xzvf /opt/store/$bundleName-v$version.tar.gz -C ./$bundleName-v$version; echo done; pwd; rm $bundleName-v$version.tar.gz");
-    
-    // $res = ssh2_exec($connection, "cat /opt/store/$bundleName-v$versionNumber.tar.gz | tar zxvf -");
-    // echo var_dump(stream_get_contents($res));
-
-    /*
-    $errs = ssh2_fetch_stream($res, 0);
-    stream_set_blocking($errs, true);
-    $result_err = stream_get_contents($errs);
-    echo 'stderr: ' . $result_err;
-    */
-
+    exec("rsync -av $bundlePath/ $location:$filePath");
 
     return true;
 
     die();
-    $res = ssh2_exec($conn, "cd /opt/store; chmod ugo+x /opt/store/$bundleName-v$versionNumber.tar.gz; mkdir $bundleName-v$versionNumber; tar -xzvf /opt/store/$bundleName-v$versionNumber.tar.gz -C ./$bundleName-v$versionNumber; echo done; pwd; rm $bundleName-v$versionNumber.tar.gz");
 }
 
 

@@ -46,6 +46,12 @@ function requestProcessor($request) {
 			case "newFanout":
 				$ret = newFanout($request);
 				return $ret;
+			case "requestVersion":
+				$ret = requestVersion($request);
+				return $ret;
+			case "rollback":
+				$ret = rollback($request);
+				return $ret;
     	}
     	return array("returnCode" => '0', 'message' => "Deployment Server received request and processed");
 }
