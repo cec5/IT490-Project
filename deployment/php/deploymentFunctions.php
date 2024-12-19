@@ -306,6 +306,18 @@ function newFanout($requestObj) {
     $mydb = new mysqli('localhost','testUser','12345','testdb');
     $bundleName = $requestObj["bundleName"];
     $cluster = $requestObj["cluster"];
+    $ipMapsWithMainUsers = [
+        "QA" => [
+            "FRONTEND" => "vboxuser@172.23.213.242",
+            "DMZ" => "cortez@172.23.96.14",
+            "BACKEND" => "dane-b@172.23.0.118"
+        ],
+        "PROD" => [
+            "FRONTEND" => "vboxuser@172.23.19.155",
+            "DMZ" => "cortez@172.23.138.156",
+            "BACKEND" => "dane-b@172.23.90.234"
+        ]
+    ];
     $ipMaps = [
         "QA" => [
             "FRONTEND" => "172.23.213.242",
@@ -340,14 +352,30 @@ function newFanout($requestObj) {
     
         $allBundles = parse_ini_file('../config/bundles.ini', true);
         $filePath = $allBundles[$bundleName]["BUNDLE_PATH"]; // THIS IS THE LOCAL/CLIENT FILE PATH
-        // $exec = ssh2_exec($conn, "ls $filePath");
+        // $exec = ssh2_exec($conn, "ls $filePath"); 
         // $exec = ssh2_exec($conn, "chmod o+rwx -R /home");
         // echo var_dump($exec);
     
-        echo "rsync -av $bundlePath/ deployer@$location:$filePath";
-    
-        $res = exec("rsync -av $bundlePath/ deployer@$location:$filePath");
+        echo "rsync -av $bundlePath/ deployer@$location:$filePath/";
+        // $res = exec("whoami");
         echo var_dump($res);
+        $res = exec("rsync -av $bundlePath/ deployer@$location:$filePath/");
+
+        // "rsync -e "ssh" -av deployer@172.23.193.68:/opt/store/FrontendPhp-v2/ /home/vboxuser/IT490-Project/frontend/php/"
+        // $res = ssh2_exec($conn, "rsync deployer@172.23.193.68:$bundlePath/ $filePath/");
+
+        // echo "rsync -av deployer@172.23.193.68:$bundlePath/ $filePath/";
+        // $res = ssh2_exec($conn, "rsync -a deployer@172.23.193.68:$bundlePath/ $filePath/");
+        // echo var_dump("rsync -av deployer@172.23.193.68:$bundlePath/ $filePath/");
+        // echo var_dump($res);
+        // echo var_dump($res);
+
+        /*
+        $errs = ssh2_fetch_stream($res, 0);
+        stream_set_blocking($errs, true);
+        $result_err = stream_get_contents($errs);
+        echo 'stderr: ' . $result_err;
+        */
     
     
         return true;
