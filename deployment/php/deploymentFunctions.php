@@ -356,10 +356,23 @@ function newFanout($requestObj) {
         // $exec = ssh2_exec($conn, "chmod o+rwx -R /home");
         // echo var_dump($exec);
     
-        echo "rsync -av $bundlePath/ deployer@$location:$filePath/";
+        echo "Executing command: " . "rsync -av $bundlePath/ deployer@$location:$filePath/";
         // $res = exec("whoami");
-        echo var_dump($res);
-        $res = exec("rsync -av $bundlePath/ deployer@$location:$filePath/");
+        // echo var_dump($res);
+        exec("rsync -av $bundlePath/ deployer@$location:$filePath/", $out, $retVal);
+        echo var_dump($out);
+        echo "Returned with exit code: " . var_dump($retVal);
+        if ($retVal > 0) { // if it errors
+            echo "oh thats not supposed to happen\n";
+            echo "run it back!\n";
+            // reverse what we were doing
+            echo "Oh I'm not like the Flash at all, some would say I'm the Reverse...\n\n";
+            $ret = ssh2_exec($conn, "rsync -av deployer@172.23.193.68:$bundlePath/ $filePath/");
+            $errs = ssh2_fetch_stream($ret, 0);
+            stream_set_blocking($errs, true);
+            $result_err = stream_get_contents($errs);
+            echo 'stderr: ' . $result_err;
+        }
 
         // "rsync -e "ssh" -av deployer@172.23.193.68:/opt/store/FrontendPhp-v2/ /home/vboxuser/IT490-Project/frontend/php/"
         // $res = ssh2_exec($conn, "rsync deployer@172.23.193.68:$bundlePath/ $filePath/");
@@ -454,7 +467,7 @@ function rollback($requestObj) {
     echo $location;
 
     // LOCALHOST OVERRIDE. UNCOMMENT!!!!!!!!!
-    $location = "172.23.193.68";
+    // $location = "172.23.193.68";
     //
     $conn = createSSHConnection($location, 22);
 
