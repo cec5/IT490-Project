@@ -105,6 +105,7 @@ if ($targetAction == "pushBundle") {
 
     $request = ["type" => "newFanout", "bundleName" => $bundleName, "cluster" => $cluster];
     $returnedResponse = sendToDeployment($request);
+    echo var_dump($returnedResponse);
 } else if ($targetAction == "switch") {
     @$bundleName = $argv[2];
     @$cluster = $argv[3]; // prod or qa
@@ -120,6 +121,7 @@ if ($targetAction == "pushBundle") {
 
     $request = ["type" => "requestVersion", "bundleName" => $bundleName, "cluster" => $cluster, "version" => $version];
     $returnedResponse = sendToDeployment($request);
+    echo var_dump($returnedResponse);
 } else if ($targetAction == "rollback") {
     @$bundleName = $argv[2];
     @$cluster = $argv[3]; // prod or qa
@@ -133,6 +135,12 @@ if ($targetAction == "pushBundle") {
 
     $request = ["type" => "rollback", "bundleName" => $bundleName, "cluster" => $cluster];
     $returnedResponse = sendToDeployment($request);
+    echo var_dump($returnedResponse);
+} else if ($targetAction == "listBundles") {
+
+    $request = ["type" => "listBundles"];
+    $returnedResponse = sendToDeployment($request);
+    echo var_dump($returnedResponse);
 } else {
     echo "Available commands:\n\tpushBundle [BUNDLE_NAME]\n\tapproveBundle [BUNDLE_NAME] [VERSION] [PASS/FAIL]\n\tfanout [BUNDLE_NAME] [PROD|QA]\n\n";
 }

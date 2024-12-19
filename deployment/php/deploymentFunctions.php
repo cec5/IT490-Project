@@ -337,9 +337,9 @@ function newFanout($requestObj) {
     if ($data != null) {
         $version = $data["VersionId"];
         $targetMachine = $data["TargetMachine"];
-        echo var_dump($data);
-        echo var_dump($version);
-        echo var_dump($targetMachine);
+        // echo var_dump($data);
+        // echo var_dump($version);
+        // echo var_dump($targetMachine);
         $bundlePath = $data["FilePath"]; // slightly misleading, THIS IS THE STORED PATH ON DEPLOYMENT
         //
         $location = $ipMaps[$cluster][$targetMachine];
@@ -433,7 +433,22 @@ function requestVersion($requestObj) {
         $allBundles = parse_ini_file('../config/bundles.ini', true);
         $filePath = $allBundles[$bundleName]["BUNDLE_PATH"]; // THIS IS THE LOCAL/CLIENT FILE PATH
     
-        exec("rsync -av $bundlePath/ deployer@$location:$filePath");
+        echo "Executing command: " . "rsync -av $bundlePath/ deployer@$location:$filePath/";
+        exec("rsync -av $bundlePath/ deployer@$location:$filePath/", $out, $retVal);
+        echo var_dump($out);
+        echo "Returned with exit code: " . var_dump($retVal);
+        if ($retVal > 0) { // if it errors
+            echo "oh thats not supposed to happen\n";
+            echo "run it back!\n";
+            // reverse what we were doing
+            echo "Oh I'm not like the Flash at all, some would say I'm the Reverse...\n\n";
+            $ret = ssh2_exec($conn, "rsync -av deployer@172.23.193.68:$bundlePath/ $filePath/");
+            $errs = ssh2_fetch_stream($ret, 0);
+            stream_set_blocking($errs, true);
+            $result_err = stream_get_contents($errs);
+            echo 'stderr: ' . $result_err;
+        }
+
         return true;
     } else {
         return false;
@@ -459,31 +474,69 @@ function rollback($requestObj) {
     $query = "SELECT * FROM versionHistory WHERE VersionId IN (SELECT MAX(VersionId) FROM versionHistory WHERE BundleName = '$bundleName' AND TestStatus = 'PASS') AND BundleName = '$bundleName'";
     $res = $mydb->query($query);
     $data = $res->fetch_assoc();
-    $version = $data["VersionId"];
-    $targetMachine = $data["TargetMachine"];
-    $bundlePath = $data["FilePath"]; // slightly misleading, THIS IS THE STORED PATH ON DEPLOYMENT
-    //
-    $location = $ipMaps[$cluster][$targetMachine];
-    echo $location;
+    if ($data != null) {
+        $version = $data["VersionId"];
+        $targetMachine = $data["TargetMachine"];
+        $bundlePath = $data["FilePath"]; // slightly misleading, THIS IS THE STORED PATH ON DEPLOYMENT
+        $location = $ipMaps[$cluster][$targetMachine];
+        $conn = createSSHConnection($location, 22);
+    
+        $allBundles = parse_ini_file('../config/bundles.ini', true);
+        $filePath = $allBundles[$bundleName]["BUNDLE_PATH"]; // THIS IS THE LOCAL/CLIENT FILE PATH
+    
+        echo "Executing command: " . "rsync -av $bundlePath/ deployer@$location:$filePath/";
+        exec("rsync -av $bundlePath/ deployer@$location:$filePath/", $out, $retVal);
+        echo var_dump($out);
+        echo "Returned with exit code: " . var_dump($retVal);
+        if ($retVal > 0) { // if it errors
+            echo "oh thats not supposed to happen\n";
+            echo "run it back!\n";
+            // reverse what we were doing
+            echo "Oh I'm not like the Flash at all, some would say I'm the Reverse...\n\n";
+            $ret = ssh2_exec($conn, "rsync -av deployer@172.23.193.68:$bundlePath/ $filePath/");
+            $errs = ssh2_fetch_stream($ret, 0);
+            stream_set_blocking($errs, true);
+            $result_err = stream_get_contents($errs);
+            echo 'stderr: ' . $result_err;
+        }
 
-    // LOCALHOST OVERRIDE. UNCOMMENT!!!!!!!!!
-    // $location = "172.23.193.68";
-    //
-    $conn = createSSHConnection($location, 22);
-
-    // figure out the remote path to be replaced
-    $allBundles = parse_ini_file('../config/bundles.ini', true);
-    $filePath = $allBundles[$bundleName]["BUNDLE_PATH"]; // THIS IS THE LOCAL/CLIENT FILE PATH
-    // $exec = ssh2_exec($conn, "rm -rf $filePath");
-    $exec = ssh2_exec($conn, "ls $filePath");
-
-    echo "rsync -av $bundlePath/ deployer@$location:$filePath";
-
-    exec("rsync -av $bundlePath/ deployer@$location:$filePath");
+        return true;
+    } else {
+        return false;
+    }
 
     return true;
 
     die();
+}
+
+function listBundles($requestObj) {
+    $mydb = new mysqli('localhost', 'testUser', '12345', 'testdb');
+
+    if ($mydb->connect_error) {
+        return "Connection error: " . $mydb->connect_error;
+    }
+
+    try {
+        $query = "SELECT * FROM versionHistory";
+        $res = $mydb->query($query);
+
+        if (!$res) {
+            throw new Exception("Database error: " . $mydb->error);
+        }
+
+        $data = [];
+        while ($row = $res->fetch_assoc()) {
+            $data[] = $row; // Append each row to the $data array
+        }
+
+        $res->free();
+        $mydb->close();
+        return $data;
+    } catch (Exception $e) {
+        $mydb->close();
+        return "Error: " . $e->getMessage();
+    }
 }
 
 

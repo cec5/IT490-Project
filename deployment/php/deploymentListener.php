@@ -52,6 +52,9 @@ function requestProcessor($request) {
 			case "rollback":
 				$ret = rollback($request);
 				return $ret;
+			case "listBundles":
+				$ret = listBundles($request);
+				return $ret;
     	}
     	return array("returnCode" => '0', 'message' => "Deployment Server received request and processed");
 }
