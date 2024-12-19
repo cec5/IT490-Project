@@ -356,10 +356,10 @@ function newFanout($requestObj) {
         // $exec = ssh2_exec($conn, "chmod o+rwx -R /home");
         // echo var_dump($exec);
     
-        echo "Executing command: " . "rsync -av $bundlePath/ deployer@$location:$filePath/";
+        echo "Executing command: " . "rsync -av $bundlePath/ deployer@$location:$filePath/ --delete";
         // $res = exec("whoami");
         // echo var_dump($res);
-        exec("rsync -av $bundlePath/ deployer@$location:$filePath/", $out, $retVal);
+        exec("rsync -av $bundlePath/ deployer@$location:$filePath/ --delete", $out, $retVal);
         echo var_dump($out);
         echo "Returned with exit code: " . var_dump($retVal);
         if ($retVal > 0) { // if it errors
@@ -367,7 +367,7 @@ function newFanout($requestObj) {
             echo "run it back!\n";
             // reverse what we were doing
             echo "Oh I'm not like the Flash at all, some would say I'm the Reverse...\n\n";
-            $ret = ssh2_exec($conn, "rsync -av deployer@172.23.193.68:$bundlePath/ $filePath/");
+            $ret = ssh2_exec($conn, "rsync -av deployer@172.23.193.68:$bundlePath/ $filePath/ --delete");
             $errs = ssh2_fetch_stream($ret, 0);
             stream_set_blocking($errs, true);
             $result_err = stream_get_contents($errs);
@@ -389,6 +389,16 @@ function newFanout($requestObj) {
         $result_err = stream_get_contents($errs);
         echo 'stderr: ' . $result_err;
         */
+
+        if ($cluster == "PROD") {
+            $req = array();
+            $req["type"] = "restart_services";
+            doFanout("prod", $req);
+        } else if ($cluster == "QA") {
+            $req = array();
+            $req["type"] = "restart_services";
+            doFanout("qa", $req);
+        }
     
     
         return true;
@@ -433,8 +443,8 @@ function requestVersion($requestObj) {
         $allBundles = parse_ini_file('../config/bundles.ini', true);
         $filePath = $allBundles[$bundleName]["BUNDLE_PATH"]; // THIS IS THE LOCAL/CLIENT FILE PATH
     
-        echo "Executing command: " . "rsync -av $bundlePath/ deployer@$location:$filePath/";
-        exec("rsync -av $bundlePath/ deployer@$location:$filePath/", $out, $retVal);
+        echo "Executing command: " . "rsync -av $bundlePath/ deployer@$location:$filePath/ --delete";
+        exec("rsync -av $bundlePath/ deployer@$location:$filePath/ --delete", $out, $retVal);
         echo var_dump($out);
         echo "Returned with exit code: " . var_dump($retVal);
         if ($retVal > 0) { // if it errors
@@ -442,11 +452,21 @@ function requestVersion($requestObj) {
             echo "run it back!\n";
             // reverse what we were doing
             echo "Oh I'm not like the Flash at all, some would say I'm the Reverse...\n\n";
-            $ret = ssh2_exec($conn, "rsync -av deployer@172.23.193.68:$bundlePath/ $filePath/");
+            $ret = ssh2_exec($conn, "rsync -av deployer@172.23.193.68:$bundlePath/ $filePath/ --delete");
             $errs = ssh2_fetch_stream($ret, 0);
             stream_set_blocking($errs, true);
             $result_err = stream_get_contents($errs);
             echo 'stderr: ' . $result_err;
+        }
+
+        if ($cluster == "PROD") {
+            $req = array();
+            $req["type"] = "restart_services";
+            doFanout("prod", $req);
+        } else if ($cluster == "QA") {
+            $req = array();
+            $req["type"] = "restart_services";
+            doFanout("qa", $req);
         }
 
         return true;
@@ -484,8 +504,8 @@ function rollback($requestObj) {
         $allBundles = parse_ini_file('../config/bundles.ini', true);
         $filePath = $allBundles[$bundleName]["BUNDLE_PATH"]; // THIS IS THE LOCAL/CLIENT FILE PATH
     
-        echo "Executing command: " . "rsync -av $bundlePath/ deployer@$location:$filePath/";
-        exec("rsync -av $bundlePath/ deployer@$location:$filePath/", $out, $retVal);
+        echo "Executing command: " . "rsync -av $bundlePath/ deployer@$location:$filePath/ --delete";
+        exec("rsync -av $bundlePath/ deployer@$location:$filePath/ --delete", $out, $retVal);
         echo var_dump($out);
         echo "Returned with exit code: " . var_dump($retVal);
         if ($retVal > 0) { // if it errors
@@ -493,11 +513,21 @@ function rollback($requestObj) {
             echo "run it back!\n";
             // reverse what we were doing
             echo "Oh I'm not like the Flash at all, some would say I'm the Reverse...\n\n";
-            $ret = ssh2_exec($conn, "rsync -av deployer@172.23.193.68:$bundlePath/ $filePath/");
+            $ret = ssh2_exec($conn, "rsync -av deployer@172.23.193.68:$bundlePath/ $filePath/ --delete");
             $errs = ssh2_fetch_stream($ret, 0);
             stream_set_blocking($errs, true);
             $result_err = stream_get_contents($errs);
             echo 'stderr: ' . $result_err;
+        }
+
+        if ($cluster == "PROD") {
+            $req = array();
+            $req["type"] = "restart_services";
+            doFanout("prod", $req);
+        } else if ($cluster == "QA") {
+            $req = array();
+            $req["type"] = "restart_services";
+            doFanout("qa", $req);
         }
 
         return true;

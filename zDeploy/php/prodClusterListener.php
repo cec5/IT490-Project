@@ -20,6 +20,10 @@ function requestProcessor($request) {
 			// Simulate deployment processing, write and call a seperate function that would get the files from deployment and overwrite/replace the current ones
 			$success = getDeploymentFromRequest($request);
 			return $success;
+		case "restart_services":
+			// Simulate deployment processing, write and call a seperate function that would get the files from deployment and overwrite/replace the current ones
+			$success = restartServicesAfterFanout();
+			return $success;
 	}
 }
 

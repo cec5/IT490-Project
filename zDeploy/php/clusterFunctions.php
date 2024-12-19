@@ -185,5 +185,17 @@ function getRelativePath($from, $to) {
     return implode('/', $relPath);
 }
 
+function restartServicesAfterFanout() {
+    @exec("systemctl deploymentListener.service restart");
+    @exec("systemctl deployerListener.service restart");
+    @exec("systemctl databaseListener.service restart");
+    @exec("systemctl clusterListener.service restart");
+    @exec("systemctl prodClusterListener.service restart");
+    @exec("systemctl qaClusterListener.service restart");
+    @exec("systemctl logListener.service restart");
+    // @exec("systemctl deployerListener.service restart");
+    return true;
+}
+
 
 ?>
