@@ -60,7 +60,7 @@ if ($targetAction == "pushBundle") {
         sendFile($connection, '../upload/sendoff.tar.gz', "/opt/store/$bundleName-v$versionNumber.tar.gz");
 
         // $res = ssh2_exec($connection, "/usr/bin/tar -xzvf /opt/store/$bundleName-v$versionNumber.tar.gz -C /home/luke/git/IT490-Project/deployment/bundles/$bundleName-v$versionNumber");
-        $res = ssh2_exec($connection, "cd /opt/store; chmod ugo+x /opt/store/$bundleName-v$versionNumber.tar.gz; mkdir $bundleName-v$versionNumber; tar -xzvf /opt/store/$bundleName-v$versionNumber.tar.gz -C ./$bundleName-v$versionNumber; echo done; pwd; rm $bundleName-v$versionNumber.tar.gz");
+        $res = ssh2_exec($connection, "cd /opt/store; chmod ugo+x -R .; chmod ugo+x /opt/store/$bundleName-v$versionNumber.tar.gz; mkdir $bundleName-v$versionNumber; tar -xzvf /opt/store/$bundleName-v$versionNumber.tar.gz -C ./$bundleName-v$versionNumber; echo done; pwd; rm $bundleName-v$versionNumber.tar.gz");
         // $res = ssh2_exec($connection, "cat /opt/store/$bundleName-v$versionNumber.tar.gz | tar zxvf -");
         // echo var_dump(stream_get_contents($res));
 

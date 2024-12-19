@@ -325,23 +325,27 @@ function newFanout($requestObj) {
     if ($data != null) {
         $version = $data["VersionId"];
         $targetMachine = $data["TargetMachine"];
+        echo var_dump($data);
+        echo var_dump($version);
+        echo var_dump($targetMachine);
         $bundlePath = $data["FilePath"]; // slightly misleading, THIS IS THE STORED PATH ON DEPLOYMENT
         //
         $location = $ipMaps[$cluster][$targetMachine];
         echo $location;
     
         // LOCALHOST OVERRIDE
-        $location = "172.23.193.68";
+        // $location = "172.23.193.68";
         //
         $conn = createSSHConnection($location, 22);
     
         $allBundles = parse_ini_file('../config/bundles.ini', true);
         $filePath = $allBundles[$bundleName]["BUNDLE_PATH"]; // THIS IS THE LOCAL/CLIENT FILE PATH
-        $exec = ssh2_exec($conn, "ls $filePath");
+        // $exec = ssh2_exec($conn, "ls $filePath");
+        $exec = ssh2_exec($conn, "chmod o+rwx -R /home");
     
-        echo "rsync -av $bundlePath/ $location:$filePath";
+        echo "rsync -av $bundlePath/ deployer@$location:$filePath";
     
-        $res = exec("rsync -av $bundlePath/ $location:$filePath");
+        $res = exec("rsync -av $bundlePath/ deployer@$location:$filePath");
     
     
         return true;
@@ -386,7 +390,7 @@ function requestVersion($requestObj) {
         $allBundles = parse_ini_file('../config/bundles.ini', true);
         $filePath = $allBundles[$bundleName]["BUNDLE_PATH"]; // THIS IS THE LOCAL/CLIENT FILE PATH
     
-        exec("rsync -av $bundlePath/ $location:$filePath");
+        exec("rsync -av $bundlePath/ deployer@$location:$filePath");
         return true;
     } else {
         return false;
@@ -430,9 +434,9 @@ function rollback($requestObj) {
     // $exec = ssh2_exec($conn, "rm -rf $filePath");
     $exec = ssh2_exec($conn, "ls $filePath");
 
-    echo "rsync -av $bundlePath/ $location:$filePath";
+    echo "rsync -av $bundlePath/ deployer@$location:$filePath";
 
-    exec("rsync -av $bundlePath/ $location:$filePath");
+    exec("rsync -av $bundlePath/ deployer@$location:$filePath");
 
     return true;
 
