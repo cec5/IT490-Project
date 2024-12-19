@@ -341,11 +341,13 @@ function newFanout($requestObj) {
         $allBundles = parse_ini_file('../config/bundles.ini', true);
         $filePath = $allBundles[$bundleName]["BUNDLE_PATH"]; // THIS IS THE LOCAL/CLIENT FILE PATH
         // $exec = ssh2_exec($conn, "ls $filePath");
-        $exec = ssh2_exec($conn, "chmod o+rwx -R /home");
+        // $exec = ssh2_exec($conn, "chmod o+rwx -R /home");
+        // echo var_dump($exec);
     
         echo "rsync -av $bundlePath/ deployer@$location:$filePath";
     
         $res = exec("rsync -av $bundlePath/ deployer@$location:$filePath");
+        echo var_dump($res);
     
     
         return true;
@@ -383,7 +385,7 @@ function requestVersion($requestObj) {
         $location = $ipMaps[$cluster][$targetMachine];
     
         // LOCALHOST OVERRIDE
-        $location = "172.23.193.68";
+        // $location = "172.23.193.68";
     
         $conn = createSSHConnection($location, 22);
     
