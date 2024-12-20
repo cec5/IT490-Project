@@ -19,14 +19,20 @@
             // Use the RabbitMQ client to validate login
             $response = createRabbitMQClientDatabase($request);
 
-            if ($response['success']) {
+	    if ($response['success']) {
+                $request = array();
+                $request['type'] = 'get_user_profile';
+                $request['user_id'] = $userId;
+
+		$userResponse = createRabbitMQClientDatabase($request);
+
                 // Store the JWT token as a cookie (expires in 1 hour, same as the token's validity)
                 setcookie('jwt_token', $response['token'], time() + 3600, "/", "", false, false);
                 
-                // Redirect to the index page
+                // Redirect to the 2FA page
                 echo "<script>
                     alert('Login successful!');
-                    window.location.href = 'index.php';
+                    window.location.href = 'verify_2fa.php';
                 </script>";
             } else {
                 echo "<div class='alert alert-danger'>{$response['message']}</div>";

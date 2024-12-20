@@ -2,10 +2,13 @@
 require_once('../rabbitmq_files/path.inc');
 require_once('../rabbitmq_files/get_host_info.inc');
 require_once('../rabbitmq_files/rabbitMQLib.inc');
+require_once('client_rmq_log.php');
 require_once('databaseFunctions.php');
 
 function requestProcessor($request){
 	echo "received request".PHP_EOL;
+	// Log the request locally and to other servers
+    	logToFile("Received request: " . json_encode($request));
 	var_dump($request);
 	if(!isset($request['type'])){
 		return "ERROR: unsupported message type";
@@ -14,59 +17,144 @@ function requestProcessor($request){
  		case "test":
 			return "test message received from the database server".PHP_EOL;
 		case "login":
-			return doLogin($request['username'], $request['password']);
+			$store = doLogin($request['username'], $request['password']);
+			responseLog($store);
+			return $store;
 		case "register":
-	  		return doRegister($request['username'], $request['email'], $request['password']);
+	  		$store = doRegister($request['username'], $request['email'], $request['password']);
+	  		responseLog($store);
+			return $store;
         	case "validate_session":
-            		return validateToken($request['token']);
+            		$store = validateToken($request['token']);
+            		responseLog($store);
+			return $store;
 	  	case "create_league":
-	  		return createLeague($request['user_id'], $request['league_name']);
+	  		$store = createLeague($request['user_id'], $request['league_name']);
+	  		responseLog($store);
+			return $store;
         	case "join_league":
-            		return joinLeague($request['user_id'], $request['league_id']);
+            		$store = joinLeague($request['user_id'], $request['league_id']);
+            		responseLog($store);
+			return $store;
             	case "leave_league":
             		return leaveLeague($request['user_id'], $request['league_id']);
             	case "get_user_leagues":
-    			return getUserLeagues($request['user_id']);
+    			$store = getUserLeagues($request['user_id']);
+    			responseLog($store);
+    			return $store;
     		case "validate_league_access":
-    			return validateLeagueAccess($request['user_id'], $request['league_id']);
+    			$store = validateLeagueAccess($request['user_id'], $request['league_id']);
+    			responseLog($store);
+    			return $store;
     		case "get_leaderboard":
-    			return getLeaderboard($request['league_id']);
+    			$store = getLeaderboard($request['league_id']);
+    			responseLog($store);
+    			return $store;
     		case "get_all_leagues":
-    			return getAllLeagues();
+    			$store = getAllLeagues();
+    			responseLog($store);
+    			return $store;
     		case "get_league_name":
-    			return getLeagueName($request['league_id']);
+    			$store = getLeagueName($request['league_id']);
+    			responseLog($store);
+    			return $store;
         	case "post_message":
-            		return postMessage($request['user_id'], $request['league_id'], $request['message']);
+            		$store = postMessage($request['user_id'], $request['league_id'], $request['message']);
+            		responseLog($store);
+    			return $store;
         	case "get_messages":
-            		return getMessages($request['league_id']);
+            		$store = getMessages($request['league_id']);
+            		responseLog($store);
+    			return $store;
             	case "get_unselected_players":
-    			return getUnselectedPlayers($request['league_id'], $request['filters']);
+    			$store = getUnselectedPlayers($request['league_id'], $request['filters']);
+    			responseLog($store);
+    			return $store;
     		case "draft_player":
-    			return draftPlayer($request['user_id'], $request['league_id'], $request['player_id'], $request['status']);
+    			$store = draftPlayer($request['user_id'], $request['league_id'], $request['player_id'], $request['status']);
+    			responseLog($store);
+    			return $store;
 		case "get_user_roster":
-    			return getUserRoster($request['user_id'], $request['league_id']);
+    			$store = getUserRoster($request['user_id'], $request['league_id']);
+    			responseLog($store);
+    			return $store;
 		case "swap_players":
-    			return swapPlayers($request['user_id'], $request['league_id'], $request['active_player_id'], $request['reserve_player_id']);
+    			$store = swapPlayers($request['user_id'], $request['league_id'], $request['active_player_id'], $request['reserve_player_id']);
+    			responseLog($store);
+    			return $store;
 		case "promote_reserve":
-    			return promoteReservePlayer($request['user_id'], $request['league_id'], $request['reserve_player_id']);
+    			$store = promoteReservePlayer($request['user_id'], $request['league_id'], $request['reserve_player_id']);
+    			responseLog($store);
+    			return $store;
 		case "remove_reserve":
-    			return removeReservePlayer($request['user_id'], $request['league_id'], $request['reserve_player_id']);
+    			$store = removeReservePlayer($request['user_id'], $request['league_id'], $request['reserve_player_id']);
+    			responseLog($store);
+    			return $store;
     		case "propose_trade":
-            		return proposeTrade($request['proposing_user_id'], $request['receiving_user_id'], $request['league_id'], $request['proposed_player_id'], $request['requested_player_id']);
+            		$store = proposeTrade($request['proposing_user_id'], $request['receiving_user_id'], $request['league_id'], $request['proposed_player_id'], $request['requested_player_id']);
+            		responseLog($store);
+    			return $store;
         	case "accept_trade":
-            		return acceptTrade($request['trade_id']);
+            		$store = acceptTrade($request['trade_id']);
+            		responseLog($store);
+    			return $store;
         	case "update_trade_status":
-            		return updateTradeStatus($request['trade_id'], $request['status']);
+            		$store = updateTradeStatus($request['trade_id'], $request['status']);
+            		responseLog($store);
+    			return $store;
         	case "get_pending_trades":
-            		return getPendingTrades($request['user_id'], $request['league_id']);
+            		$store = getPendingTrades($request['user_id'], $request['league_id']);
+            		responseLog($store);
+    			return $store;
             	case "get_user_reserve_players":
-            		return getUserReservePlayers($request['user_id'], $request['league_id']);
+            		$store = getUserReservePlayers($request['user_id'], $request['league_id']);
+            		responseLog($store);
+    			return $store;
             	case "get_league_members":
-    			return getLeagueMembers($request['league_id'], $request['user_id'] ?? null);
+    			$store = getLeagueMembers($request['league_id'], $request['user_id'] ?? null);
+    			responseLog($store);
+    			return $store;
     		case "get_other_reserve_players":
-   			return getOtherReservePlayers($request['user_id'], $request['league_id']);
+   			$store = getOtherReservePlayers($request['user_id'], $request['league_id']);
+   			responseLog($store);
+    			return $store;
+	      	case "get_user_profile":
+			return getUserProfile($request['user_id']);
+		case "update_phone_number":
+			return updatePhoneNumber($request['user_id'], $request['phoneNum']);
+		case "generate_2fa":
+			return generate2FACode($request['user_id']);
+		case "disable_2fa":
+			return disable2FA($request['user_id']);
+		case "verify_2fa_code":
+			return verify2FACode($request['user_id'], $request['verification_code']);
   	}
+  	// Log the response locally
+    	logToFile("Response: " . json_encode($response));
 	return array("returnCode" => '0', 'message'=>"Database Server received request and processed");
+}
+
+// Function to store logging info locally
+function logToFile($message) {
+    	$logFile = '../logging/backend.log';
+    	$timestamp = date('Y-m-d H:i:s');
+    	file_put_contents($logFile, "[$timestamp] $message" . PHP_EOL, FILE_APPEND);
+    	distributeLogs($message, $timestamp);
+}
+
+function distributeLogs($message, $timestamp) {
+    	$logRequest = array();
+    	$logRequest['type'] = 'backend';
+    	$logRequest['message'] = $message;
+    	$logRequest['source'] = 'backend';
+    	$logRequest['timestamp'] = $timestamp;
+    	createRabbitMQClientLogFanout($logRequest);
+}
+
+function responseLog($array){
+	try {
+		logToFile("Response: " . json_encode($array['message']));
+	} catch (Exception $e){ echo "No message or unknown error".PHP_EOL;}
 }
 
 $server = new rabbitMQServer("../rabbitmq_files/rabbitMQ_db.ini","testServer");

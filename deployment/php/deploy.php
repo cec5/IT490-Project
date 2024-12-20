@@ -1,6 +1,6 @@
 <?php
 // Define the base directory for the zip files
-$baseDir = __DIR__ . "/store";
+$baseDir = __DIR__ . "/../store";
 
 // 127.0.0.1/request.php?branch=dev&version=1.0&role=frontend
 
